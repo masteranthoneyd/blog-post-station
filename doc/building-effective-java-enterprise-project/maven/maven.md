@@ -20,6 +20,8 @@ Maven 常用插件: ***[https://maven.apache.org/plugins/index.html](https://mav
 
 ## 查看插件用法
 
+> ***[Maven 官方插件列表](https://maven.apache.org/plugins/index.html)***
+
 在 Maven 构建过程中, 会用到很多插件, 对于插件的详细用法, 除了查看插件官网之外, 还可以通过 `help:describe` 来简单查看用法:
 
 ```
@@ -32,8 +34,6 @@ mvn help:describe -Dplugin=${groupId}:${artifactId} -Ddetail
 # 查看某个 goal 的说明
  mvn help:describe -Dplugin=${groupId}:${artifactId} -Ddetail -Dgoal=perform
 ```
-
-* Maven 的一些常用插件
 
 # 依赖管理
 
