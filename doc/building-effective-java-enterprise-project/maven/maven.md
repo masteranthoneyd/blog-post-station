@@ -101,7 +101,73 @@ mvn help:describe -Dplugin=${groupId}:${artifactId} -Ddetail
 
 **注意**: 在 `pluginManagement` 中指定了额外配置, 子模块中也指定了额外配置, 最终是采取配置**合并**的策略, 如果配置的属性一样则以子模块的为准.
 
+# 加速依赖下载
 
+> ***[https://maven.apache.org/guides/introduction/introduction-to-repositories.html](https://maven.apache.org/guides/introduction/introduction-to-repositories.html)***
+
+在 pom.xml 中配置的依赖仓库以及插件仓库, 默认情况下, 如果本地仓库没有的话, 是直接从 Maven 中央仓库([***central***](https://repo.maven.apache.org/maven2/))下载的, 也就是说, 如果 `repository` 中没有显示配置 id 为 `central` 的 `repository`, Maven 会自动追加一个. **从中央仓库拉取镜像在国内是比较慢的**, **所以一般来说会配置一个镜像仓库(比如阿里云镜像)**.
+
+> 阿里云镜像文档: ***[https://developer.aliyun.com/mvn/guide](https://developer.aliyun.com/mvn/guide)***
+
+`repository` 可以配置在 pom.xml, settings.xml, 以及两者的 profile 中. 加载顺序由进到远: 本地仓库 -> pom.xml 中配置的仓库 -> settings.xml 中配置的仓库. 下面是一个例子:
+
+```
+<repositories>
+    <repository>
+        <id>your-nexus</id>
+        <name>Private Nexus</name>
+        <releases>
+            <enabled>true</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+        </snapshots>
+        <url>http://your-nexus.com/public</url>
+    </repository>
+    <repository>
+        <id>Aliyun</id>
+        <name>central</name>
+        <releases>
+            <enabled>true</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+        </snapshots>
+        <url>https://maven.aliyun.com/repository/public</url>
+    </repository>
+</repositories>
+<pluginRepositories>
+    <pluginRepository>
+        <id>your-nexus</id>
+        <name>Private Nexus</name>
+        <releases>
+            <enabled>true</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+        </snapshots>
+        <url>http://your-nexus.com/public</url>
+    </pluginRepository>
+    <pluginRepository>
+        <id>Aliyun</id>
+        <name>central</name>
+        <releases>
+            <enabled>true</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+        </snapshots>
+        <url>https://maven.aliyun.com/repository/public</url>
+    </pluginRepository>
+</pluginRepositories>
+```
+
+* 这里将 `central` 替换成了阿里云镜像, 或者在 settings.xml 中配置 mirror, 但请注意, 如果有 Nexus, mirrorOf 不要配置 `*`, 这样会导致 Nexus 失效.
+* 另外一种做法是统一在 Nexus 中处理, 配置一个proxy, 与 hosted类型 的 release 仓 以及 snapshot 仓捆绑成一个 group 类型的仓库, repository 再指向这个仓库即可.
 
 # 统一版本管理
 
@@ -167,6 +233,7 @@ Maven 从  3.5.0-beta-1 版本开始支持 [***Maven CI Friendly Versions***](ht
 
     <distributionManagement>
         <repository>
+            <!--对应 settings.xml 中 的 server id-->
             <id>artifact-repository</id>
             <url><<your-artifact-repo-url>></url>
         </repository>
@@ -229,6 +296,7 @@ Maven Release 对于大型项目的构建比较慢, 因为需要重复跑一些�
 
     <distributionManagement>
         <repository>
+            <!--对应 settings.xml 中 的 server id-->
             <id>artifact-repository</id>
             <url><<your-artifact-repo-url>></url>
         </repository>
@@ -308,11 +376,6 @@ profile 可以声明在 `pom.xml`,  ` %USER_HOME%/.m2/settings.xml ` 或者 ` ${
       </profile>
     </profiles>
     ```
-
-    
-
-
-
 
 
 # 常用插件
