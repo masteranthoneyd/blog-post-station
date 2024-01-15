@@ -6,14 +6,14 @@
 
 就在 2018 年 4 月，Oracle Labs 新公开了一项黑科技：***[Graal VM](https://www.graalvm.org/)***，从它的口号 "Run Programs Faster Anywhere" 就能感觉到一颗蓬勃的野心, 并且它提供了一种革命性的技术 [***Java Native Image***](https://www.graalvm.org/latest/reference-manual/native-image/) 以适应当今云原生时代.
 
-# GraalVM
+# GraalVM Native Image
 
 > 官方介绍: [***GraalVM Overview***](https://www.graalvm.org/latest/docs/introduction/)
 > 维基百科: [***GraalVM - Wiki***](https://en.wikipedia.org/wiki/GraalVM)
 
-GraalVM 最早关于 GraalVM 工作可以追溯到 2012 年, 然而，最初的版本并没有立即成为公共可用的产品, GraalVM 项目于2018年逐渐成熟，GraalVM 19.0 是首个包含 GraalVM Native Image 的公开版本，这是在2019年1月发布的, GraalVM Native Image 提供了一种将 Java 程序编译成本地机器代码的方法，以便在启动和运行时获得更好的性能和资源利用率, 这使得 Java 应用程序能够更好地适应云原生和容器化环境.
+![](https://image.cdn.yangbingdong.com/image/java-native-image-exploring/d5d8d8de13ad1ebd0903e7c93922c102-8224c5.png)
 
-
+ GraalVM 是一种**高性能的通用虚拟机**(意味着可以运行多种语言), 最早关于 GraalVM 工作可以追溯到 2012 年, 然而，最初的版本并没有立即成为公共可用的产品, GraalVM 项目于2018年逐渐成熟，GraalVM 19.0 是首个包含 **GraalVM Native Image** 的公开版本，这是在2019年1月发布的, GraalVM Native Image 提供了一种将 Java 程序编译成本地机器代码的方法, 也就是 AOT( Ahead-of-Time Compilation)，以便在启动和运行时获得更好的性能和资源利用率, 这使得 Java 应用程序能够更好地**适应云原生**和容器化环境.
 
 **AOT的优点**:
 
@@ -24,13 +24,25 @@ GraalVM 最早关于 GraalVM 工作可以追溯到 2012 年, 然而，最初的�
 **AOT的缺点**:
 
 - 由于是静态提前编译，不能根据硬件情况或程序运行情况择优选择机器指令序列，**理论峰值性能不如JIT**
-- **没有动态能力**
-- 同一份产物**不能跨平台运行**
+- **没有动态能力**,  Java的动态特性, 包括反射, JNI, 代理都需要通过配置文件在构建前实现声明好 
+- 同一份产物**不能跨平台运行**(不能交叉编译)
 
-![](https://image.cdn.yangbingdong.com/image/java-native-image-exploring/d5d8d8de13ad1ebd0903e7c93922c102-8224c5.png)
+关于 GraalVM Native Image 更详细的介绍请看官网或者这篇文章: [***Revolutionizing Java with GraalVM Native Image***](https://www.infoq.com/articles/native-java-graalvm/)
 
 # Remark
 
 * Windows 下建议使用 Docker 构建 Native Image, 避免出现奇奇怪怪的问题, Quarkus 以及 Spring Boot 都有支持.
 * Windows 下是用 Docker Desktop 管理 Docker 的, 尽量多分配点资源, 否则容易出现编译慢甚至卡死的现象, 辛苦等半天结果编译失败了 T.T
+
+
+
+GraalVM 生成本地可执行文件的过程。具体步骤如下：
+
+1. 初始化：初始化必要的信息，如使用的编译器等。
+2. 分析：对代码进行分析，统计类、字段、方法等的数量。
+3. 构建宇宙：建立存在的整体模型。
+4. 解析方法：对代码中的方法进行解析。
+5. 内联方法：对方法进行内联。
+6. 编译方法：将方法编译成机器码。
+7. 生成图像：生成最终的可执行文件。
 

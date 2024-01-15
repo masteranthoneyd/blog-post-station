@@ -601,6 +601,14 @@ Spring Boot 由于支持了在配置文件中使用一样的占位符 `${}`, 所
 </plugin>
 ```
 
+## 打包相关插件
+
+比较常用的是下面三个:
+
+* [***maven-jar-plugin***](https://maven.apache.org/plugins/maven-jar-plugin/)
+* [***maven-war-plugin***](https://maven.apache.org/plugins/maven-war-plugin/)
+* [***maven-shade-plugin***](https://maven.apache.org/plugins/maven-shade-plugin/)
+
 ## 打包源码 maven-source-plugin
 
 > ***[https://maven.apache.org/plugins/maven-source-plugin/](https://maven.apache.org/plugins/maven-source-plugin/)***

@@ -299,6 +299,12 @@ Halo 自带一个附件功能, 虽然可以上传图片, 但是其不建议把�
   * 注意, 这个插件里还带了 MD5 重命名的功能, 如果用了其他重命名插件比如上面的 `picgo-plugin-rename-file` 就不要开启这个重命名的选项
 * 其他插件请参考: [***Awesome-PicGo***](https://github.com/PicGo/Awesome-PicGo)
 
+## 插件
+
+Halo 提供了强大的应用市场, 我们可以在里面安装所需要的插件或者有能力的也可以自己开发插件.
+
+![](https://image.cdn.yangbingdong.com/image/building-personal-blog-with-halo-and-alibaba-cloud/c4d482a462e83a41e75d608a3a46e62b-543067.png)
+
 # 其他建议
 
 * 为确保**可移植性**, 最好使用通用的 Markdown 格式编写文章, 方便以后想切换底层博客框架的时候文章不会那么难迁移.
