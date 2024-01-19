@@ -29,6 +29,49 @@
 
 关于 GraalVM Native Image 更详细的介绍请看官网或者这篇文章: [***Revolutionizing Java with GraalVM Native Image***](https://www.infoq.com/articles/native-java-graalvm/)
 
+
+
+
+
+# 构建方式
+
+> [***Guides - Build(graalvm.org)***](https://www.graalvm.org/latest/guides/?topic=build)
+
+## 通过 native-image tool 本地构建
+
+> `native-image` 是 GraalVM SDK 自带的镜像构建工具.
+>
+> 相关文档:
+>
+> * [***Build a Native Executable from a JAR File***](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-native-executable-from-jar/)
+> * [***Build Java Modules into a Native Executable***](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-java-modules-into-native-executable/)
+
+利用 GraalVM 提供的 `native-image` 工具直接构建:
+
+```
+# from class
+native-image [options] class [imagename] [options]
+
+# from jar
+native-image [options] -jar jarfile [imagename]
+```
+
+> Windows 中的命令可能是 `native-image.exe` 或者 `native-image.cmd`, 取决于你的安装方式
+
+
+
+## 通过 Maven 插件构建
+
+> [***Maven plugin for GraalVM Native Image building***](https://graalvm.github.io/native-build-tools/latest/maven-plugin.html)
+
+## 基于 Buildpack 构建
+
+Requirements:
+
+* [***pack cli***](https://buildpacks.io/docs/install-pack/)
+
+
+
 # Remark
 
 * Windows 下建议使用 Docker 构建 Native Image, 避免出现奇奇怪怪的问题, Quarkus 以及 Spring Boot 都有支持.
