@@ -31,8 +31,6 @@
 
 
 
-
-
 # 构建方式
 
 > [***Guides - Build(graalvm.org)***](https://www.graalvm.org/latest/guides/?topic=build)
@@ -63,6 +61,275 @@ native-image [options] -jar jarfile [imagename]
 ## 通过 Maven 插件构建
 
 > [***Maven plugin for GraalVM Native Image building***](https://graalvm.github.io/native-build-tools/latest/maven-plugin.html)
+
+### 基本使用
+
+> 参考项目 ***[graalvm-demos/fortune-demo](https://github.com/graalvm/graalvm-demos/blob/master/fortune-demo/README.md)***
+
+流程:
+
+* 编写代码, 配置 pom native-maven-plugin
+* 普通编译或者打包
+  * `mvn clean compile`
+* 运行 native agent 采集 native metadata
+  * `mvn -Pnative -Dagent exec:exec@java-agent`
+* 打包 native image
+  * `mvn -Pnative -Dagent package`
+
+插件配置:
+
+```
+<plugin>
+    <groupId>org.graalvm.buildtools</groupId>
+    <artifactId>native-maven-plugin</artifactId>
+    <extensions>true</extensions>
+    <executions>
+        <execution>
+            <id>build-native</id>
+            <goals>
+                <goal>compile-no-fork</goal>
+            </goals>
+            <phase>package</phase>
+        </execution>
+        <execution>
+            <id>test-native</id>
+            <goals>
+                <goal>test</goal>
+            </goals>
+            <phase>test</phase>
+        </execution>
+    </executions>
+    <configuration>
+        <fallback>false</fallback>
+
+        <!-- 编译后可执行文件的名字 -->
+        <imageName>${imageName}</imageName>
+
+        <!-- 启用 tracing agent 帮助生成 native image metadata, 默认是关闭的, 代替的, 也可以通过命令行添加 -Dagent=true 开启 -->
+        <agent>
+            <enabled>true</enabled>
+            <defaultMode>Standard</defaultMode>
+        </agent>
+    </configuration>
+</plugin>
+```
+
+### 插件参数
+
+native-maven-plugin 会自动采集 `META-INF/native-image/` 路径下的[***配置文件***](https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildConfiguration/), 这些配置也可以通过插件的 `<configuration>` 节点配置.
+
+* `<mainClass>`: 如果执行时抛出 `no main manifest attribute, in target/<name>.jar` 错误信息, 那么需要手动配置这个 mainClass 到 native-maven-plugin 中. 一般情况下, native-maven-plugin 会自动感知 pom 里面的打包插件寻找里面的 mainClass, 插件优先级:
+
+  * `<maven-shade-plugin> <transformers> <transformer> <mainClass>`
+  * `<maven-assembly-plugin> <archive> <manifest> <mainClass>`
+  * `<maven-jar-plugin> <archive> <manifest> <mainClass>`
+
+* `<imageName>`: 生成二进制问价的名字, 不配置默认取项目的 artifact ID.
+
+* `<buildArgs>`: 传递额外的构建参数, 参数列表参考: ***[Native Image Build Options](https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildOptions/)***
+
+  * `<buildArgs><arg>--argument</arg></buildArgs>`
+
+  * 该标签可以在父工程跟子工程之间进行组合: 
+
+    * ```
+      <!-- 父工程 -->
+      <plugin>
+        <groupId>org.graalvm.buildtools</groupId>
+        <artifactId>native-maven-plugin</artifactId>
+        <version>${current_plugin_version}</version>
+        <configuration>
+          <imageName>${project.artifactId}</imageName>
+          <mainClass>${exec.mainClass}</mainClass>
+          <buildArgs>
+            <buildArg>--no-fallback</buildArg>
+          </buildArgs>
+        </configuration>
+      </plugin>
+      
+      <!-- 子工程 -->
+      <plugin>
+        <groupId>org.graalvm.buildtools</groupId>
+        <artifactId>native-maven-plugin</artifactId>
+        <configuration>
+          <buildArgs combine.children="append">
+            <buildArg>--verbose</buildArg>
+          </buildArgs>
+        </configuration>
+      </plugin>
+      ```
+
+* `<skipNativeBuild>`: 是否跳过 native 构建
+
+* `<skipNativeTests>`: 是否跳过 native 测试
+
+* `<debug>`: 是否生成 debug 信息
+
+* `<verbose>`: 是否输出 verbose 信息
+
+* `<sharedLibrary>`: 是否最为 shared library
+
+* `<useArgFile>`: 是否使用 argument file
+
+* `<quickBuild>`: 是否启用快速构建模式, 该模式适合开发阶段快速构建 nativa 镜像, 这类型镜像性能可能变弱因为舍弃了一部分代码的优化换取了构建时间, 以下是来自[***官网的原话***](https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildOutput/#qbm-use-quick-build-mode-for-faster-builds):
+
+  * > Consider using the quick build mode (`-Ob`) to speed up your builds during development. More precisely, this mode reduces the number of optimizations performed by the Graal compiler and thus reduces the overall time of the [compilation stage](https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildOutput/#stage-compiling). The quick build mode is not only useful for development, it can also cause the generated executable file to be smaller in size. Note, however, that the overall peak throughput of the executable may be lower due to the reduced number of optimizations.
+
+* `<excludeConfig>`: 排除的配置
+
+  * ```
+    <excludeConfig>
+        <entry>
+            <jarPath>dummy/path/to/file.jar</jarPath>
+            <resourcePattern>*</resourcePattern>
+        </entry>
+    </excludeConfig>
+    ```
+
+* `<environment>`: 配置 native 构建时的环境变量
+
+  * ```
+    <environment>
+        <variable>value</variable>
+    </environment>
+    ```
+
+* `<systemPropertyVariables>`: 指定构建时的 system properties
+
+  * ```
+    <systemPropertyVariables>
+        <propertyName>value</propertyName>
+    </systemPropertyVariables>
+    ```
+
+* `<jvmArgs>`: 指定构建时的 JVM 参数
+
+  * ```
+    <jvmArgs>
+        <arg>argument1</arg>
+        <arg>argument2</arg>
+    </jvmArgs>
+    ```
+
+* `<configurationFileDirectories>`: 自定义配置文件检索目录
+
+  * ```
+    <configurationFileDirectories>
+        <dir>path/to/dir</dir>
+    </configurationFileDirectories>
+    ```
+
+* `<classpath>`: 自定义 classpath
+
+  * ```
+    <classpath>
+        <param>path/to/file.jar</param>
+        <param>path/to/classes</param>
+    </classpath>
+    ```
+
+* `<classesDirectory>`: 指定打包 JAR 的自定义路径，或只包含应用程序类的自定义目录，但希望插件仍能自动为依赖项添加 classpath 条目
+
+  * ```
+    <classesDirectory>
+        path/to/dir
+    </classesDirectory>
+    ```
+
+* `<agent>`: native agent tool 配置
+
+  * ```
+    <agent>
+      <enabled>true</enabled>
+    </agent>
+    ```
+
+
+
+### 动态特性支持
+
+native image 不支持像 Java 反射, 动态代理等运行时才确定的因素, 因此需要通过在构建时告诉 native build tool 这些动态的代码或者配置.
+
+#### native image agent 支持
+
+native-iamge-agent 生成的配置文件默认放在了 `target/native/agent-output` 目录下, 建议将这些配置文件放到你的源码中.
+
+启用 agent 支持:
+
+* 通过命令行参数: `-Dagent=true`
+
+* pom
+
+  * ```
+    <configuration>
+      <agent>
+        <enabled>true</enabled>
+      </agent>
+    </configuration>
+    ```
+
+以下是配置示例:
+
+```
+<configuration>
+    <agent>
+        <enabled>true</enabled>
+        <defaultMode>Standard</defaultMode>
+        <modes>
+            <direct>config-output-dir=${project.build.directory}/native/agent-output</direct>
+            <conditional>
+                <userCodeFilterPath>user-code-filter.json</userCodeFilterPath>
+                <extraFilterPath>extra-filter.json</extraFilterPath>
+                <parallel>true</parallel>
+            </conditional>
+        </modes>
+        <options>
+            <callerFilterFiles>
+                <filterFile>caller-filter-file1.json</filterFile>
+                <filterFile>caller-filter-file2.json</filterFile>
+            </callerFilterFiles>
+            <accessFilterFiles>
+                <filterFile>access-filter-file1.json</filterFile>
+                <filterFile>access-filter-file2.json</filterFile>
+            </accessFilterFiles>
+            <builtinCallerFilter>true</builtinCallerFilter>
+            <builtinHeuristicFilter>true</builtinHeuristicFilter>
+            <enableExperimentalPredefinedClasses>true</enableExperimentalPredefinedClasses>
+            <enableExperimentalUnsafeAllocationTracing>
+                true
+            </enableExperimentalUnsafeAllocationTracing>
+            <trackReflectionMetadata>true</trackReflectionMetadata>
+        </options>
+        <metadataCopy>
+            <disabledStages>
+                <stage>main</stage>
+            </disabledStages>
+            <merge>true</merge>
+            <outputDirectory>/tmp/test-output-dir</outputDirectory>
+        </metadataCopy>
+    </agent>
+</configuration>
+```
+
+* ***[Caller-based Filters](https://www.graalvm.org/latest/reference-manual/native-image/metadata/AutomaticMetadataCollection/#caller-based-filters)*** 以及 ***[Access Filters](https://www.graalvm.org/latest/reference-manual/native-image/metadata/AutomaticMetadataCollection/#access-filters)*** 请看链接
+
+* 参数:
+
+  * `enabled`: 是否启用 agent
+  * `defaultMode`, 有三种模式: 
+    * `standard`: 这种模式下只能使用 `options` 标签配置 agent
+    * `direct`: 这种模式下用户需要提供全量的 agent 配置, pom 中的剩下关于 agent 的配置将被忽略
+    * `conditional`: 可以提供额外的 filter, 更多请看[***这里***](https://www.graalvm.org/latest/reference-manual/native-image/metadata/ExperimentalAgentOptions/)
+  * `modes`: 对 direct 以及 conditional 模式起效, 参考上面的示例
+  * `options`: agent 参数选项, 通用参数可以在[***这里***](https://www.graalvm.org/latest/reference-manual/native-image/metadata/AutomaticMetadataCollection/)找到.
+  * `metadataCopy`: 操纵 agent 生成的 metadate 文件
+    * `<outputDirectory>`: 复制 native 配置文件的目标文件夹
+    * `<merge>`: 如果目标文件夹存在了配置文件, 是否进行合并, 否则覆盖
+    * `<disabledStages>`: 在 main 阶段 或者 test 阶段禁用该复制操作
+
+  > 未解之谜: 按官方描述, metadataCopy 操作应该是在 agent 完成之后, 但本地测试后并没有进行复制操作, 需要额外在 mvn 构建命令中追加 `native:metadata-copy` 才行.
+
+
 
 ## 基于 Buildpack 构建
 
