@@ -327,9 +327,18 @@ native-iamge-agent 生成的配置文件默认放在了 `target/native/agent-out
     * `<merge>`: 如果目标文件夹存在了配置文件, 是否进行合并, 否则覆盖
     * `<disabledStages>`: 在 main 阶段 或者 test 阶段禁用该复制操作
 
-  > 未解之谜: 按官方描述, metadataCopy 操作应该是在 agent 完成之后, 但本地测试后并没有进行复制操作, 需要额外在 mvn 构建命令中追加 `native:metadata-copy` 才行.
+  > 按官方描述, metadataCopy 操作应该是在 agent 完成之后, 但本地测试后并没有进行复制操作, 需要额外在 mvn 构建命令中追加 `native:metadata-copy` 才行.
 
+#### Reachability Metadata Support
 
+添加如下配置:
+
+```
+<metadataRepository>
+    <enabled>true</enabled>
+    <version>0.3.6</version>
+</metadataRepository>
+```
 
 ## 基于 Buildpack 构建
 
@@ -355,4 +364,12 @@ GraalVM 生成本地可执行文件的过程。具体步骤如下：
 5. 内联方法：对方法进行内联。
 6. 编译方法：将方法编译成机器码。
 7. 生成图像：生成最终的可执行文件。
+
+
+
+```
+java --enable-preview -agentlib:native-image-agent=config-output-dir=META-INF/native-image -jar build-basie-native-image-1.0-SNAPSHOT-shaded.jar StringCapitalizer bingdong
+```
+
+
 
