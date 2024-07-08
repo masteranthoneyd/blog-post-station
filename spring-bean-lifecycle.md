@@ -1,6 +1,8 @@
 # Spring Bean Lifecycle
 
-了解 Spring Bean的生命周期的同时也是在了解 Spring 的一些拓展点, 有助于我们基于拓展点正确的进行一些中间件或者横切业务逻辑的实现.
+Spring 的核心内容之一就是 Bean 的生命周期, 而这部分逻辑大部分内容都封装在 `refresh` 中,  外部看上去风平浪静，其实内部则是一片惊涛骇浪. Spring Boot更是封装了 Spring，遵循**约定大于配置**，加上**自动装配**的机制, 很多时候我们只要引用了一个依赖，**几乎是零配置**就能完成一个功能的装配。
+
+了解 Spring Bean的生命周期的同时也是在了解 Spring 的一些拓展点, 加深对 Spring 的理解, 有助于我们基于拓展点使用正确姿势去实现一些中间件或者横切业务逻辑的实现.
 
 Spring Bean的生命周期只有这四个阶段。实例化对应构造方法，属性赋值对应setter方法的注入，初始化和销毁是用户能自定义扩展的两个阶段。
 
@@ -71,11 +73,25 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 > *  Ordered是二等公民，然后执行，Ordered公民之间通过接口返回值排序 
 > * 都没有实现是三等公民，最后执行
 
-# Spring Boot Lifecycle
+# 一图流
 
-一图流:
+![](https://image.cdn.yangbingdong.com/image/spring-bean-lifecycle/9fff6c6b3d0f606db623618c53c0661a-27cad7.jpg)
+
+![](https://image.cdn.yangbingdong.com/image/spring-bean-lifecycle/e4ed012bf754ebb79471c3aeb03d75b0-8d6a05.png)
+
+![](https://image.cdn.yangbingdong.com/image/spring-bean-lifecycle/2cec2917c40b79127c0c4a8f46d3f7c0-50fb29.webp)
 
 ![](https://image.cdn.yangbingdong.com/image/spring-bean-lifecycle/0e7cd07d7953200bcb6f48648d6779b4-c94671.png)
+
+# 详解
+
+* `org.springframework.context.ApplicationContextInitializer`:  用于在 `ApplicationContext` 被刷新（`refresh`）之前对其进行编程初始化。这种机制允许在上下文刷新之前插入一些自定义的逻辑或配置.
+  * `ApplicationContextInitializer` 的一个经典实现是 `PropertySourceBootstrapConfiguration`, 该实现通过拿到 `PropertySourceLocator` 的实现向 `ConfigurableEnvironment` 注入外部配置, 比如 Nacos 配置中心就是这么实现的, 参考 `NacosPropertySourceLocator`.
+* ` org.springframework.beans.factory.config.BeanFactoryPostProcessor`:  是 Spring 框架中的一个重要接口，它允许我们在 Spring 容器的标准初始化过程之后、实际的 bean 实例化之前，对 bean 的定义（`BeanDefinition`）进行修改。这种机制在 Spring 框架中用于各种配置和自定义初始化逻辑。常见的 BeanFactoryPostProcessor 实现如下
+  * ` PropertySourcesPlaceholderConfigurer `: 用于处理 `@Value` 注解中的占位符比如 `${spring.application.name}`。它从外部资源文件（如 properties 文件）中读取值，并将这些值注入到 Spring bean 中。
+  * `ConfigurationClassPostProcessor` : 它主要负责解析使用 `@Configuration` 注解的配置类，以及通过 `@ComponentScan` 和 `@Import` 等注解注册的类, 然后注册到 Spirng 容器中.
+
+
 
 # Spring Boot Starter 的推荐实现方式
 
