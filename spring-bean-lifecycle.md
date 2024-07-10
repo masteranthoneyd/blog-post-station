@@ -81,12 +81,33 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 
 ![](https://image.cdn.yangbingdong.com/image/spring-bean-lifecycle/2cec2917c40b79127c0c4a8f46d3f7c0-50fb29.webp)
 
-![](https://image.cdn.yangbingdong.com/image/spring-bean-lifecycle/0e7cd07d7953200bcb6f48648d6779b4-c94671.png)
 
-# 详解
 
-* `org.springframework.context.ApplicationContextInitializer`:  用于在 `ApplicationContext` 被刷新（`refresh`）之前对其进行编程初始化。这种机制允许在上下文刷新之前插入一些自定义的逻辑或配置.
+# 流程顺序
+
+* 发布 `org.springframework.boot.context.event.ApplicationStartingEvent`
+  * 这个阶段只能通过 `spring.factories` 或者手动向 `SpringApplication` 注册 Listener
+* `org.springframework.boot.SpringApplicationRunListener#starting`: 上面的 `ApplicationStartingEvent` 发布也是通过这里发出去的, 实现类: `org.springframework.boot.context.event.EventPublishingRunListener`
+  * 实现类需要通过 `spring.factories` 添加进去
+* 发布 `org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent`: 当加载好一些系统环境变量之后, 会发布该事件, 这里有几个重要的 Listener:
+  * `org.springframework.boot.context.logging.LoggingApplicationListener`: 在这个节点初始化日志系统, 所以在这个节点之前使用 log 打印日志一般情况下是不会有输出的, 因为日志系统尚未初始化.
+    * 如果需要在这个时机之前打印日志, 可以使用 `DeferredLogFactory` 实现, 原理是先将日志缓存起来, 待日志系统初始化完成之后, 调用 `org.springframework.boot.logging.DeferredLogs#switchOverAll` 进行日志的重放.
+  * `org.springframework.boot.env.EnvironmentPostProcessorApplicationListener`: 负责加载并调用 `org.springframework.boot.env.EnvironmentPostProcessor`
+* `org.springframework.boot.env.EnvironmentPostProcessor`: 在环境变量准备好之后, 通过 `EnvironmentPostProcessorApplicationListener` 处理, 实现类必须通过 `spring.factories` 注册. 改接口几个重要的实现类:
+  * `org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor`: 负责加载 application.yaml 配置文件, 加载逻辑以及顺序封装在了 `org.springframework.boot.context.config.ConfigDataEnvironment`
+  * `org.springframework.boot.env.RandomValuePropertySourceEnvironmentPostProcessor`: 负责处理随机变量, 比如 `${random.uuid}`, `${random.value}` 等
+
+* `org.springframework.boot.SpringApplicationRunListener#environmentPrepared` 
+  * 上面的 `ApplicationEnvironmentPreparedEvent` 是从改节点发布出去的
+
+* `org.springframework.context.ApplicationContextInitializer#initialize`:  用于在 `ApplicationContext` 被刷新（`refresh`）之前对其进行编程初始化。这种机制允许在上下文刷新之前插入一些自定义的逻辑或配置.
   * `ApplicationContextInitializer` 的一个经典实现是 `PropertySourceBootstrapConfiguration`, 该实现通过拿到 `PropertySourceLocator` 的实现向 `ConfigurableEnvironment` 注入外部配置, 比如 Nacos 配置中心就是这么实现的, 参考 `NacosPropertySourceLocator`.
+* 发布 `org.springframework.boot.context.event.ApplicationContextInitializedEvent`
+
+
+
+
+
 * ` org.springframework.beans.factory.config.BeanFactoryPostProcessor`:  是 Spring 框架中的一个重要接口，它允许我们在 Spring 容器的标准初始化过程之后、实际的 bean 实例化之前，对 bean 的定义（`BeanDefinition`）进行修改。这种机制在 Spring 框架中用于各种配置和自定义初始化逻辑。常见的 BeanFactoryPostProcessor 实现如下
   * ` PropertySourcesPlaceholderConfigurer `: 用于处理 `@Value` 注解中的占位符比如 `${spring.application.name}`。它从外部资源文件（如 properties 文件）中读取值，并将这些值注入到 Spring bean 中。
   * `ConfigurationClassPostProcessor` : 它主要负责解析使用 `@Configuration` 注解的配置类，以及通过 `@ComponentScan` 和 `@Import` 等注解注册的类, 然后注册到 Spirng 容器中.
@@ -94,6 +115,8 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 
 
 # Spring Boot Starter 的推荐实现方式
+
+Starter 标准的实现姿势在 Spring Boot 自身的包中就已经有很多参考了.
 
 * 声明配置类, 并在类上贴 `@AutoConfiguration` (2.7.0 以前的版本使用 `@Configuration`)注解, Bean 在配置类中声明
 * 在 `spring.factories` 或者 `org.springframework.boot.autoconfigure.AutoConfiguration.imports` (Spring Boot 3.0 之后的方式) 加上配置类
