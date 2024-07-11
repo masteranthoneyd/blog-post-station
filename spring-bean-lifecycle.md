@@ -96,13 +96,26 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 * `org.springframework.boot.env.EnvironmentPostProcessor`: 在环境变量准备好之后, 通过 `EnvironmentPostProcessorApplicationListener` 处理, 实现类必须通过 `spring.factories` 注册. 改接口几个重要的实现类:
   * `org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor`: 负责加载 application.yaml 配置文件, 加载逻辑以及顺序封装在了 `org.springframework.boot.context.config.ConfigDataEnvironment`
   * `org.springframework.boot.env.RandomValuePropertySourceEnvironmentPostProcessor`: 负责处理随机变量, 比如 `${random.uuid}`, `${random.value}` 等
-
 * `org.springframework.boot.SpringApplicationRunListener#environmentPrepared` 
   * 上面的 `ApplicationEnvironmentPreparedEvent` 是从改节点发布出去的
-
 * `org.springframework.context.ApplicationContextInitializer#initialize`:  用于在 `ApplicationContext` 被刷新（`refresh`）之前对其进行编程初始化。这种机制允许在上下文刷新之前插入一些自定义的逻辑或配置.
   * `ApplicationContextInitializer` 的一个经典实现是 `PropertySourceBootstrapConfiguration`, 该实现通过拿到 `PropertySourceLocator` 的实现向 `ConfigurableEnvironment` 注入外部配置, 比如 Nacos 配置中心就是这么实现的, 参考 `NacosPropertySourceLocator`.
 * 发布 `org.springframework.boot.context.event.ApplicationContextInitializedEvent`
+* `org.springframework.boot.SpringApplicationRunListener#contextPrepared`
+  * 上面的 `ApplicationContextInitializedEvent` 在该阶段发布
+
+* 发布 `org.springframework.boot.context.event.ApplicationPreparedEvent`, 该事件几个重要的监听:
+  * `org.springframework.boot.context.logging.LoggingApplicationListener#onApplicationPreparedEvent` 将初始化后的日志系统注册到 Spring 容器中
+  * `org.springframework.boot.env.EnvironmentPostProcessorApplicationListener#onApplicationPreparedEvent` 调用缓存日志 `DeferredLogs#switchOverAll` 进行日志重放
+
+* `org.springframework.boot.SpringApplicationRunListener#contextLoaded`
+  * 上面的 `ApplicationPreparedEvent` 在该节点发布
+
+* `org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor#postProcessBeanDefinitionRegistry` 在 Bean 初始化之前加载更多的 Bean, 在 Spring 中比较重要的实现
+  * `org.springframework.context.annotation.ConfigurationClassPostProcessor`: 负责解析被 `@Configuration` 标注的类
+
+
+
 
 
 
