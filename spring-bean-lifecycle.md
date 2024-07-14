@@ -85,45 +85,62 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 
 # 流程顺序
 
-* 发布 `org.springframework.boot.context.event.ApplicationStartingEvent`
+* 发布 **`org.springframework.boot.context.event.ApplicationStartingEvent`**
   * 这个阶段只能通过 `spring.factories` 或者手动向 `SpringApplication` 注册 Listener
-* `org.springframework.boot.SpringApplicationRunListener#starting`: 上面的 `ApplicationStartingEvent` 发布也是通过这里发出去的, 实现类: `org.springframework.boot.context.event.EventPublishingRunListener`
+* **`org.springframework.boot.SpringApplicationRunListener#starting`**: 上面的 `ApplicationStartingEvent` 发布也是通过这里发出去的, 实现类: `org.springframework.boot.context.event.EventPublishingRunListener`
   * 实现类需要通过 `spring.factories` 添加进去
-* 发布 `org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent`: 当加载好一些系统环境变量之后, 会发布该事件, 这里有几个重要的 Listener:
+* 发布 **`org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent`**: 当加载好一些系统环境变量之后, 会发布该事件, 这里有几个重要的 Listener:
   * `org.springframework.boot.context.logging.LoggingApplicationListener`: 在这个节点初始化日志系统, 所以在这个节点之前使用 log 打印日志一般情况下是不会有输出的, 因为日志系统尚未初始化.
-    * 如果需要在这个时机之前打印日志, 可以使用 `DeferredLogFactory` 实现, 原理是先将日志缓存起来, 待日志系统初始化完成之后, 调用 `org.springframework.boot.logging.DeferredLogs#switchOverAll` 进行日志的重放.
+    * 如果需要在这个时机之前打印日志, 可以使用 ⭐**`DeferredLogFactory`** 实现, 原理是先将日志缓存起来, 待日志系统初始化完成之后, 调用 `org.springframework.boot.logging.DeferredLogs#switchOverAll` 进行日志的重放.
   * `org.springframework.boot.env.EnvironmentPostProcessorApplicationListener`: 负责加载并调用 `org.springframework.boot.env.EnvironmentPostProcessor`
-* `org.springframework.boot.env.EnvironmentPostProcessor`: 在环境变量准备好之后, 通过 `EnvironmentPostProcessorApplicationListener` 处理, 实现类必须通过 `spring.factories` 注册. 改接口几个重要的实现类:
-  * `org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor`: 负责加载 application.yaml 配置文件, 加载逻辑以及顺序封装在了 `org.springframework.boot.context.config.ConfigDataEnvironment`
+* **`org.springframework.boot.env.EnvironmentPostProcessor`**: 在环境变量准备好之后, 通过 `EnvironmentPostProcessorApplicationListener` 处理, 实现类必须通过 `spring.factories` 注册. 改接口几个重要的实现类:
+  * `org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor`: 负责**加载 `application.yaml` 配置文件**, 加载逻辑以及顺序封装在了 `org.springframework.boot.context.config.ConfigDataEnvironment`
   * `org.springframework.boot.env.RandomValuePropertySourceEnvironmentPostProcessor`: 负责处理随机变量, 比如 `${random.uuid}`, `${random.value}` 等
-* `org.springframework.boot.SpringApplicationRunListener#environmentPrepared` 
+* **`org.springframework.boot.SpringApplicationRunListener#environmentPrepared`** 
   * 上面的 `ApplicationEnvironmentPreparedEvent` 是从改节点发布出去的
-* `org.springframework.context.ApplicationContextInitializer#initialize`:  用于在 `ApplicationContext` 被刷新（`refresh`）之前对其进行编程初始化。这种机制允许在上下文刷新之前插入一些自定义的逻辑或配置.
+* **`org.springframework.context.ApplicationContextInitializer#initialize`**:  用于在 `ApplicationContext` 被刷新（`refresh`）之前对其进行编程初始化。这种机制允许在上下文刷新之前插入一些自定义的逻辑或配置.
   * `ApplicationContextInitializer` 的一个经典实现是 `PropertySourceBootstrapConfiguration`, 该实现通过拿到 `PropertySourceLocator` 的实现向 `ConfigurableEnvironment` 注入外部配置, 比如 Nacos 配置中心就是这么实现的, 参考 `NacosPropertySourceLocator`.
-* 发布 `org.springframework.boot.context.event.ApplicationContextInitializedEvent`
+* 发布 **`org.springframework.boot.context.event.ApplicationContextInitializedEvent`**
 * `org.springframework.boot.SpringApplicationRunListener#contextPrepared`
   * 上面的 `ApplicationContextInitializedEvent` 在该阶段发布
-
-* 发布 `org.springframework.boot.context.event.ApplicationPreparedEvent`, 该事件几个重要的监听:
+* 发布 **`org.springframework.boot.context.event.ApplicationPreparedEvent`**, 该事件几个重要的监听:
   * `org.springframework.boot.context.logging.LoggingApplicationListener#onApplicationPreparedEvent` 将初始化后的日志系统注册到 Spring 容器中
-  * `org.springframework.boot.env.EnvironmentPostProcessorApplicationListener#onApplicationPreparedEvent` 调用缓存日志 `DeferredLogs#switchOverAll` 进行日志重放
-
-* `org.springframework.boot.SpringApplicationRunListener#contextLoaded`
+  * `org.springframework.boot.env.EnvironmentPostProcessorApplicationListener#onApplicationPreparedEvent` 调用缓存日志 `DeferredLogs#switchOverAll` 进行**日志重放**
+* **`org.springframework.boot.SpringApplicationRunListener#contextLoaded`**
   * 上面的 `ApplicationPreparedEvent` 在该节点发布
-
-* `org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor#postProcessBeanDefinitionRegistry` 在 Bean 初始化之前加载更多的 Bean, 在 Spring 中比较重要的实现
-  * `org.springframework.context.annotation.ConfigurationClassPostProcessor`: 负责解析被 `@Configuration` 标注的类
-
-
-
-
-
-
-
-
-* ` org.springframework.beans.factory.config.BeanFactoryPostProcessor`:  是 Spring 框架中的一个重要接口，它允许我们在 Spring 容器的标准初始化过程之后、实际的 bean 实例化之前，对 bean 的定义（`BeanDefinition`）进行修改。这种机制在 Spring 框架中用于各种配置和自定义初始化逻辑。常见的 BeanFactoryPostProcessor 实现如下
-  * ` PropertySourcesPlaceholderConfigurer `: 用于处理 `@Value` 注解中的占位符比如 `${spring.application.name}`。它从外部资源文件（如 properties 文件）中读取值，并将这些值注入到 Spring bean 中。
-  * `ConfigurationClassPostProcessor` : 它主要负责解析使用 `@Configuration` 注解的配置类，以及通过 `@ComponentScan` 和 `@Import` 等注解注册的类, 然后注册到 Spirng 容器中.
+* **`org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor#postProcessBeanDefinitionRegistry`** 在 Bean 初始化之前加载更多的 Bean, `BeanFactoryPostProcessor` 的子类, 优先于 `BeanFactoryPostProcessor` 加载, 在 Spring 中比较重要的实现:
+  * `org.springframework.context.annotation.ConfigurationClassPostProcessor`: 负责解析配置类, 比如 ⭐**`@Configuration`**, ⭐**`@Import`** 等, 其中 `@Import` 涉及的拓展点如下:
+    * **`org.springframework.context.annotation.ImportSelector#selectImports`**: 返回需要注册成 bean 的类名,  用于基于条件选择并导入配置类, 适用于简单的条件性配置加载, 比如 `CacheConfigurationImportSelector`
+    * **`org.springframework.context.annotation.DeferredImportSelector`**: `ImportSelector` 的子类, 在所有 @`Configuration` 的类加载完之后调用, 可以确保某些配置类只有在其他配置类处理完之后才被加载.
+    * **`org.springframework.context.annotation.ImportBeanDefinitionRegistrar#registerBeanDefinitions`**:  另一个用于在配置阶段注册额外 bean 定义的接口。它提供了更大的灵活性，可以直接操作 `BeanDefinitionRegistry`, 进行跟复杂的 BeanDefinition 配置, 比如 `ConfigurationPropertiesScanRegistrar`
+* **`org.springframework.beans.factory.config.BeanFactoryPostProcessor#postProcessBeanFactory`**:  实际的 bean **实例化之前**，对 bean 的定义（`BeanDefinition`）进行修改, 这种机制允许我们在容器初始化的早期阶段插入一些自定义的逻辑或配置. 比较经典的实现:
+  * `org.springframework.context.support.PropertySourcesPlaceholderConfigurer`:  这是一个常见的实现类，用于**解析** ⭐**`@Value("${foo.bar}")`** 注解中的占位符, 比如。它从外部资源文件（如 `properties` 文件）中读取值，并将这些值注入到 Spring bean 中。 
+  * `org.springframework.boot.test.mock.mockito.MockitoPostProcessor`: 处理 `@MockBean` 
+* ⭐⭐⭐**`org.springframework.beans.factory.config.BeanPostProcessor#postProcessBeforeInitialization, postProcessAfterInitialization`**: **这是关于 Spring 生命周期最重要的接口**了, 在 `AbstractAutowireCapableBeanFactory#doCreateBean` 创建 Bean 的逻辑中获取所有 BeanPostProcessor 并 for 循环 apply. 包括它的子类定义了一些列生命周期的回调, 比如实例化之前, 属性注入时, 初始化, 销毁等. 
+  * `ConfigurationPropertiesBindingPostProcessor`: 在初始化之前绑定 ⭐**`@ConfigurationProperties`** 中的属性.
+  * ⭐**`org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor#postProcessBeforeInstantiation, postProcessAfterInstantiation, postProcessProperties`**: `BeanPostProcessor` 的子类, 在这基础上添加了实例化之前, 实例化之后, 注入属性后的回调.
+    * `AutowiredAnnotationBeanPostProcessor`: 负责处理 ⭐**`@Autowired`** 以及 **`@Value`** 值的注入.
+    * `SmartInstantiationAwareBeanPostProcessor`: 新增了暴露早期引用 `getEarlyBeanReference` 方法用于解决**循环依赖**问题, 有关 **AOP** 以及**代理**相关的操作大部分来源于该接口的实现类, 比如 `@Async`, `@Transational`
+      * `AsyncAnnotationBeanPostProcessor`: 处理 ⭐**`@Async`** 方法, 包装成代理实现异步
+  * **`org.springframework.context.support.ApplicationContextAwareProcessor`**: 初始化之前注入实现了 *Aware 的相关资源, 比如 `ApplicationContextAware`, `EnvironmentAware` 等, 但**除了** `BeanNameAware`, `BeanClassLoaderAware` 以及 `BeanFactoryAware`, 这三个比较特殊, 是在初始化之前在 `AbstractAutowireCapableBeanFactory#invokeAwareMethods` 进行处理的.
+    * `EmbeddedValueResolverAware`
+    * `ResourceLoaderAware`
+    * `ApplicationEventPublisherAware`
+    * `MessageSourceAware`
+    * `ApplicationStartupAware`
+    * `EnvironmentAware`
+    * ⭐**`ApplicationContextAware`**
+  * `org.springframework.beans.factory.config.DestructionAwareBeanPostProcessor`: 定义了**销毁**前的 callback
+    * `InitDestroyAnnotationBeanPostProcessor`: 负责处理 ⭐**`@PostConstruct`** 以及 ⭐**`@PreDestroy`**, 因为是在 `BeanPostProcessor#postProcessBeforeInitialization` 中处理的, 加载时机在 `AbstractAutowireCapableBeanFactory#invokeInitMethods`(回调 ⭐**`InitializingBean#afterPropertiesSet`** 以及 `@Bean` 中指定的 ⭐**`initMethod`**) 之前
+      * `CommonAnnotationBeanPostProcessor`: 处理 ⭐**`@Resource`** 注解
+    * `ApplicationListenerDetector`: 将 ⭐**`ApplicationListener`** 的实现类放到 `ApplicationEvent` 的监听列表中
+    * `ScheduledAnnotationBeanPostProcessor`: 处理 ⭐**`@Scheduled`** 注解
+* **`org.springframework.beans.factory.SmartInitializingSingleton#afterSingletonsInstantiated`**:  在**所有单例 bean 都初始化完成之后**执行一些特定的逻辑.
+  * `EventListenerMethodProcessor`: 处理 ⭐**`@EventListener`** 注解.
+* ⭐**`org.springframework.context.SmartLifecycle#start`**:  主要用于需要在应用程序**启动**和**停止**时执行特定操作的组件, 是用于**开启流量**类的操作, 比如启动 Web 容器, 启动 MQ 监听, 启动定时任务等.
+  * `WebServerStartStopLifecycle`: 启动 Web 容器, 并发布 **`ServletWebServerInitializedEvent`** 事件.
+* 发布 `org.springframework.context.event.ContextRefreshedEvent` 事件
+  * DispatcherServlet 就是通过
 
 
 
