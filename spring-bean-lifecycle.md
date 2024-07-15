@@ -1,8 +1,20 @@
 # Spring Bean Lifecycle
 
+# 为什么需要了解 Spring 声明周期
+
 Spring 的核心内容之一就是 Bean 的生命周期, 而这部分逻辑大部分内容都封装在 `refresh` 中,  外部看上去风平浪静，其实内部则是一片惊涛骇浪. Spring Boot更是封装了 Spring，遵循**约定大于配置**，加上**自动装配**的机制, 很多时候我们只要引用了一个依赖，**几乎是零配置**就能完成一个功能的装配。
 
-了解 Spring Bean的生命周期的同时也是在了解 Spring 的一些拓展点, 加深对 Spring 的理解, 有助于我们基于拓展点使用正确姿势去实现一些中间件或者横切业务逻辑的实现.
+了解 Spring Bean的生命周期的同时也是在了解 Spring 的一些拓展点, 加深对 Spring 的理解, 有助于我们**合理正确**的利用拓展点去实现一些中间件或者横切业务逻辑的实现. 为什么需要合理正确的使用这些拓展点, 不是能用就行了吗? 确实大部分时候, 在当下的时候能用就行, 但是否想过会不会为以后埋下坑或者已经欠了技术债务了呢? 比如:
+
+* 在过早的时机启动了一些组件导致部分 Bean 没有被 BeanPostProcessor 增强
+* 本该可以异步启动组件却在 Spring Bean 初始化阶段启动
+* 不按标准化的步骤封装一些 starter 组件
+
+正如 Docker 的最佳实践是一个实例只有一个进程, 但不影响在里面起多个进程的做法, Spring 依赖注入的最佳实践是构造器注入, 但并不影响使用 `@Autowired` 进行循环依赖注入(A依赖B, B依赖A). 但类似这种非标准化的做法往往会在某个阶段出现问题, 拿前面两个 case 来说, Docker 多进程违反单一职责导致优雅关机失败, 因为 Docker 默认只会通知 PID 为 1 的进程进行关机操作; 而 Spring 循环依赖解决已经在 Spring Boot 2.6 的版本默认关闭, 虽然可以通过配置进行开启, 但谁知道哪天 Spring 会直接不支持循环依赖了呢?
+
+
+
+# Spring Bean 生命周期简约版
 
 Spring Bean的生命周期只有这四个阶段。实例化对应构造方法，属性赋值对应setter方法的注入，初始化和销毁是用户能自定义扩展的两个阶段。
 
@@ -73,17 +85,15 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 > *  Ordered是二等公民，然后执行，Ordered公民之间通过接口返回值排序 
 > * 都没有实现是三等公民，最后执行
 
-# 一图流
+# Spring 生命周期一图流
 
 ![](https://image.cdn.yangbingdong.com/image/spring-bean-lifecycle/9fff6c6b3d0f606db623618c53c0661a-27cad7.jpg)
 
 ![](https://image.cdn.yangbingdong.com/image/spring-bean-lifecycle/e4ed012bf754ebb79471c3aeb03d75b0-8d6a05.png)
 
-![](https://image.cdn.yangbingdong.com/image/spring-bean-lifecycle/2cec2917c40b79127c0c4a8f46d3f7c0-50fb29.webp)
 
 
-
-# 流程顺序
+# Spring 生命周期相关拓展点
 
 * 发布 **`org.springframework.boot.context.event.ApplicationStartingEvent`**
   * 这个阶段只能通过 `spring.factories` 或者手动向 `SpringApplication` 注册 Listener
@@ -113,6 +123,11 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
     * **`org.springframework.context.annotation.ImportSelector#selectImports`**: 返回需要注册成 bean 的类名,  用于基于条件选择并导入配置类, 适用于简单的条件性配置加载, 比如 `CacheConfigurationImportSelector`
     * **`org.springframework.context.annotation.DeferredImportSelector`**: `ImportSelector` 的子类, 在所有 @`Configuration` 的类加载完之后调用, 可以确保某些配置类只有在其他配置类处理完之后才被加载.
     * **`org.springframework.context.annotation.ImportBeanDefinitionRegistrar#registerBeanDefinitions`**:  另一个用于在配置阶段注册额外 bean 定义的接口。它提供了更大的灵活性，可以直接操作 `BeanDefinitionRegistry`, 进行跟复杂的 BeanDefinition 配置, 比如 `ConfigurationPropertiesScanRegistrar`
+* **`org.springframework.beans.factory.FactoryBean`**: 严格来说这个接口是 Bean 的一个拓展, 并不是控制 Spring 生命周期的, 这里列出来只是它也算一个拓展点, 用于创建复杂的 Bean, 比如 AOP 相关的.
+  * `ProxyFactoryBean`: 创建AOP代理相关的 Bean
+  * `org.mybatis.spring.SqlSessionFactoryBean`: 创建 SqlSession Bean
+  * `org.apache.dubbo.config.spring.ReferenceBean`: 创建 Dubbo `@Reference` 代理 Bean
+
 * **`org.springframework.beans.factory.config.BeanFactoryPostProcessor#postProcessBeanFactory`**:  实际的 bean **实例化之前**，对 bean 的定义（`BeanDefinition`）进行修改, 这种机制允许我们在容器初始化的早期阶段插入一些自定义的逻辑或配置. 比较经典的实现:
   * `org.springframework.context.support.PropertySourcesPlaceholderConfigurer`:  这是一个常见的实现类，用于**解析** ⭐**`@Value("${foo.bar}")`** 注解中的占位符, 比如。它从外部资源文件（如 `properties` 文件）中读取值，并将这些值注入到 Spring bean 中。 
   * `org.springframework.boot.test.mock.mockito.MockitoPostProcessor`: 处理 `@MockBean` 
@@ -122,6 +137,7 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
     * `AutowiredAnnotationBeanPostProcessor`: 负责处理 ⭐**`@Autowired`** 以及 **`@Value`** 值的注入.
     * `SmartInstantiationAwareBeanPostProcessor`: 新增了暴露早期引用 `getEarlyBeanReference` 方法用于解决**循环依赖**问题, 有关 **AOP** 以及**代理**相关的操作大部分来源于该接口的实现类, 比如 `@Async`, `@Transational`
       * `AsyncAnnotationBeanPostProcessor`: 处理 ⭐**`@Async`** 方法, 包装成代理实现异步
+    * `ReferenceAnnotationBeanPostProcessor`: 负责注入 `@DubboReference` 字段
   * **`org.springframework.context.support.ApplicationContextAwareProcessor`**: 初始化之前注入实现了 *Aware 的相关资源, 比如 `ApplicationContextAware`, `EnvironmentAware` 等, 但**除了** `BeanNameAware`, `BeanClassLoaderAware` 以及 `BeanFactoryAware`, 这三个比较特殊, 是在初始化之前在 `AbstractAutowireCapableBeanFactory#invokeAwareMethods` 进行处理的.
     * `EmbeddedValueResolverAware`
     * `ResourceLoaderAware`
@@ -137,10 +153,51 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
     * `ScheduledAnnotationBeanPostProcessor`: 处理 ⭐**`@Scheduled`** 注解
 * **`org.springframework.beans.factory.SmartInitializingSingleton#afterSingletonsInstantiated`**:  在**所有单例 bean 都初始化完成之后**执行一些特定的逻辑.
   * `EventListenerMethodProcessor`: 处理 ⭐**`@EventListener`** 注解.
-* ⭐**`org.springframework.context.SmartLifecycle#start`**:  主要用于需要在应用程序**启动**和**停止**时执行特定操作的组件, 是用于**开启流量**类的操作, 比如启动 Web 容器, 启动 MQ 监听, 启动定时任务等.
+* ⭐**`org.springframework.context.SmartLifecycle#start`**:  主要用于需要在应用程序**启动**和**停止**时执行特定操作的组件, 是用于**开启流量**类的操作, 比如启动 Web 容器, 启动 MQ 监听, 启动定时任务等, 下面是一些实现类:
   * `WebServerStartStopLifecycle`: 启动 Web 容器, 并发布 **`ServletWebServerInitializedEvent`** 事件.
+  * `RedisMessageListenerContainer`: 启动 Redis 事件订阅
+  * `SchedulerFactoryBean`: 启动 Quartz 定时任务
+  * `NacosWatch`: 监听 Nacos 配置变化
 * 发布 `org.springframework.context.event.ContextRefreshedEvent` 事件
-  * DispatcherServlet 就是通过
+  * 以前的 `DispatcherServlet` 就是通过该事件进行初始化的.
+  * `DubboBootstrapApplicationListener` 启动 Dubbo (`DubboBootstrap#start`)
+* 发布 `org.springframework.boot.context.event.ApplicationStartedEvent`
+  * `TomcatMetricsBinder`: 监听 `ApplicationStartedEvent` 启动, 绑定 `TomcatMetrics` 到 `MeterRegistry`.
+
+* `org.springframework.boot.SpringApplicationRunListener#started`
+  * 上面的 `ApplicationStartedEvent` 通过该节点发布
+
+* `org.springframework.boot.Runner`, 该接口有两个实现
+  * `org.springframework.boot.ApplicationRunner#run`
+    * `JobLauncherApplicationRunner`: 启动 Spring Batch Job
+
+  * `org.springframework.boot.CommandLineRunner#run`
+
+* 发布 `org.springframework.boot.context.event.SpringApplicationEvent`
+  * `BackgroundPreinitializer`: 对于一些异步初始化的任务, 在这里 await 等待所有任务执行完毕.
+
+* `org.springframework.boot.SpringApplicationRunListener#ready`
+  * `SpringApplicationEvent` 在这里发布
+
+
+
+
+到此为止, 启动相关的拓展点基本就这些了, 接下来是**销毁**阶段的一些接口:
+
+* `org.springframework.context.event.ContextClosedEvent`
+  * `DubboBootstrapApplicationListener`: 调用 Dubbo 相关 shutdown hook
+* ⭐**`org.springframework.context.Lifecycle#stop`**: 容器销毁前回调
+  * `ExecutorLifecycleDelegate`: 关闭线程池
+  * `WebServerGracefulShutdownLifecycle`: 优雅关机
+* Spring Bean PreDestroy
+  * `org.springframework.beans.factory.config.DestructionAwareBeanPostProcessor#postProcessBeforeDestruction`:
+    * `SimpleServletPostProcessor`: 销毁 Servlet
+    * `InitDestroyAnnotationBeanPostProcessor`: 处理 ⭐**`@PreDestroy`** 注解
+  * ⭐**`org.springframework.beans.factory.DisposableBean#destroy`**
+    * `OkHttp3ClientHttpRequestFactory`: 关闭线程池
+    * `RedissonConnectionFactory`: 关闭 Redisson 连接池
+  * `@Bean(destroyMethod = "destroyMethod")`
+  * `java.lang.AutoCloseable`: 只有当上面三个销毁方式都没有定义时, 才会触发该接口
 
 
 
