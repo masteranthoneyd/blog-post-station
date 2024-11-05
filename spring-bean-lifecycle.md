@@ -247,3 +247,7 @@ com.example.autoconfig.MyAutoConfiguration
 **注意点**
 
 对于配置 Properties 类, 尽量使用 `@ConfigurationProperties` + `@EnableConfigurationProperties` 使用.
+
+# Ref
+
+* ***[万字长文带你窥探Spring中所有的扩展点](https://blog.csdn.net/seven97_top/article/details/142028002)***
