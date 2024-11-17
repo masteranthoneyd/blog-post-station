@@ -155,6 +155,7 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
   * `EventListenerMethodProcessor`: 处理 ⭐**`@EventListener`** 注解.
 * ⭐**`org.springframework.context.SmartLifecycle#start`**:  主要用于需要在应用程序**启动**和**停止**时执行特定操作的组件, 是用于**开启流量**类的操作, 比如启动 Web 容器, 启动 MQ 监听, 启动定时任务等, 下面是一些实现类:
   * `WebServerStartStopLifecycle`: 启动 Web 容器, 并发布 **`ServletWebServerInitializedEvent`** 事件.
+  * `AbstractAutoServiceRegistration` 通过监听该事件启动**服务注册**
   * `RedisMessageListenerContainer`: 启动 Redis 事件订阅
   * `SchedulerFactoryBean`: 启动 Quartz 定时任务
   * `NacosWatch`: 监听 Nacos 配置变化
