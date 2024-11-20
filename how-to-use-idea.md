@@ -4,8 +4,6 @@
 
 在 IDEA 或者 JetBrains Gateway 中支持多种远程开发的方式, 这里介绍一下 SSH 以及 Dev Containers.
 
-
-
 ## SSH
 
 首先得配置一个 SSH 连接的配置, 推荐使用公钥的方式.
@@ -42,9 +40,54 @@ systemctl restart sshd
 
 ## Devcontainer
 
-Devcontainer 原理上就是在 docker 容器里面构建一个开发环境, 然后通过 Gateway IDEA 客户端连接上去.
+> ***[Development Containers](https://containers.dev/)***
+>
+> ***[IDEA Dev Container overview](https://www.jetbrains.com/help/idea/connect-to-devcontainer.html)***
 
-个人觉得 Devcontainer 有一些不足:
+Docker 也可以被当做一种远程系统, Devcontainer 就是利用了在 Docker, 通过声明镜像名, 必要的类库软件(比如 Git), 以及一些 Docker 声明周期的管理等配置到一个配置文件中(一般叫 `devcontainer.json`), 下面是一个 demo:
 
-* 虽然可通过 features 关键字添加一些开发工具, 但原理上是在容器启动之后再安装, 网络不好的情况下会导致启动时间很久, 所以建议预先将环境构建在 Dockerfile 中声明并实现构建好镜像.
-* 每次新建一个 Devcontainer 会下载一个新的 IDEA, 有些个性化配置或者插件需要重新弄一遍, 但这个问题应该可以通过共享 cache 目录来解决.
+```
+{
+  "name": "minimal_ubuntu",
+  "image": "ubuntu:latest",
+  "onCreateCommand": {
+    "update": "apt update && apt -y upgrade",
+    "installDependencies": "apt install -y git"
+  },
+  "mounts": [{
+    "source": "${localEnv:HOME}",
+    "target": "/hostHome",
+    "type": "bind"
+  }, {
+    "source": "mount",
+    "target": "/volume/mount",
+    "type": "volume"
+  }],
+  "customizations": {
+    "jetbrains" : {"backend": "IntelliJ"},
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  }
+}
+```
+
+> 这里是一个 Jetbrains 官方的 devcontainer examples:  ***[devcontainers-examples](https://github.com/JetBrains/devcontainers-examples)*** 
+
+通过 IDEA 打开:
+
+![](https://image.cdn.yangbingdong.com/image/how-to-use-idea/eb85be0627d1262aed4393f91361966e-fd1a01.png)
+
+之后就会根据 devcontainer.json 中的定义启动镜像, 准备环境变量, 执行定义的命令, 安装定义的 features, 下载 IDEA, 将代码 check in 等等, 完成之后就会打开一个 IDEA 窗口了.
+
+![](https://image.cdn.yangbingdong.com/image/how-to-use-idea/a82ff1242095603adcb6fff923d4f42e-58a88d.png)
+
+
+
+注意:** 如果是远程 Docker 的方式需要使用 SSH 连接方式(因为需要正确识别上下文):
+
+![](https://image.cdn.yangbingdong.com/image/how-to-use-idea/a5cf419986fac82cdd3e1011d192da60-adc3d5.png)
+
+
+
+目前就个人体验上来说不如 SSH 的方式, 虽然可通过 features 关键字添加一些开发工具, 但原理上是在容器启动之后再安装, 网络不好的情况下会导致启动时间很久, 所以建议预先将环境构建在 Dockerfile 中声明并实现构建好镜像. 而且Devcontainer 会下载一个新的 IDEA, 个性化配置或者插件需要重新弄一遍, 虽然有共享 volumn, 但这个被删了就需要重新弄了.
