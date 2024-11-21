@@ -1,3 +1,5 @@
+
+
 ![](https://image.cdn.yangbingdong.com/image/java-native-image-exploring/5f1d2ca90862bab4fa5afe565f7dd070-696f8e.png)
 
 # 前言
@@ -30,6 +32,8 @@
 关于 GraalVM Native Image 更详细的介绍请看官网或者这篇文章: [***Revolutionizing Java with GraalVM Native Image***](https://www.infoq.com/articles/native-java-graalvm/)
 
 # Getting Start
+
+> 官方 Demo:  ***[graalvm-demos](https://github.com/graalvm/graalvm-demos)*** 
 
 ## Prerequisites
 
@@ -71,7 +75,9 @@ Usage: native-image [options] class [imagename] [options]
 
 ### 参数解释
 
-* **-H:+ReportExceptionStackTraces**: 构建原生应用时输出详细错误信息。
+* `-o`: 指定二进制镜像名
+
+* `-H:+ReportExceptionStackTraces`: 构建原生应用时输出详细错误信息。
 
 ## Using native-image in Docker
 
@@ -94,16 +100,26 @@ ENTRYPOINT ["/bin/bash","--login", "-c"]
 基于该镜像制作一个用于跑项目编译后 jar 包的 Native Image 镜像:
 
 ```
-FROM yangbingdong/ubuntu24-graalvm21:latest
+FROM yangbingdong/ubuntu24-graalvm21:latest as builder
 
 WORKDIR /tmp/build
 ADD . /tmp/build
-RUN native-image -o XXX -jar XXX.jar
+RUN native-image -jar Hello.jar -o hello
 
-CMD["/tmp/build/XXX"]
+FROM frolvlad/alpine-glibc:glibc-2.34
+COPY --from=builder /tmp/build/hello /
+ENTRYPOINT ["/hello"]
 ```
 
-或者 mount target 目录, 直接进到容器中跑命令也可以~
+###  Difference between Mostly Static and Fully Static 
+
+通过上面给出的 Dockerfile 构建出来的二进制文件并不能直接跑在没有任何依赖的 `scratch` 镜像中, 至少需要有 `glibc` 库的支持, 这是因为这还不是一个 Fully Static Image, 关于如何构建 Fully Static Image, 请参考: 
+
+* ***[Build a Static or Mostly-Static Native Executable](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-static-executables/)***
+* ***[https://github.com/graalvm/graalvm-demos/tree/master/tiny-java-containers](https://github.com/graalvm/graalvm-demos/tree/master/tiny-java-containers)***
+
+
+![](https://image.cdn.yangbingdong.com/image/java-native-image-exploring/8b5ce0bf2292e3782b8f329e64150f32-c1919f.png)
 
 ## 通过 Maven 插件构建
 
