@@ -6,7 +6,7 @@
 
 就在 2018 年 4 月，Oracle Labs 新公开了一项黑科技：***[Graal VM](https://www.graalvm.org/)***，从它的口号 "Run Programs Faster Anywhere" 就能感觉到一颗蓬勃的野心, 并且它提供了一种革命性的技术 [***Java Native Image***](https://www.graalvm.org/latest/reference-manual/native-image/) 以适应当今云原生时代.
 
-# GraalVM Native Image
+# What is GraalVM Native Image
 
 > 官方介绍: [***GraalVM Overview***](https://www.graalvm.org/latest/docs/introduction/)
 > 维基百科: [***GraalVM - Wiki***](https://en.wikipedia.org/wiki/GraalVM)
@@ -29,34 +29,81 @@
 
 关于 GraalVM Native Image 更详细的介绍请看官网或者这篇文章: [***Revolutionizing Java with GraalVM Native Image***](https://www.infoq.com/articles/native-java-graalvm/)
 
+# Getting Start
+
+## Prerequisites
+
+Native Image 的构建需要平台本地的一些类库支持, 取决于你在什么平台编译, 比如对于 Ubuntu 需要额外安装:
+```
+apt install build-essential libz-dev zlib1g-dev
+```
+
+对于 Windows 需要安装 Visual Studio, 有关不同平台配置和依赖更详细的说明, 请参考: [***Native Image Prerequisites*** ](https://www.graalvm.org/latest/reference-manual/native-image/#prerequisites)
 
 
-# 构建方式
+
+## Build Tool: native-image 
 
 > [***Guides - Build(graalvm.org)***](https://www.graalvm.org/latest/guides/?topic=build)
 
-## 通过 native-image tool 本地构建
+`native-image` 是 GraalVM SDK 用于镜像本地可运行二进制文件的工具.
 
-> `native-image` 是 GraalVM SDK 自带的镜像构建工具.
->
-> 相关文档:
->
-> * [***Build a Native Executable from a JAR File***](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-native-executable-from-jar/)
-> * [***Build Java Modules into a Native Executable***](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-java-modules-into-native-executable/)
+相关文档:
 
-利用 GraalVM 提供的 `native-image` 工具直接构建:
+* [***Build a Native Executable from a JAR File***](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-native-executable-from-jar/)
+* [***Build Java Modules into a Native Executable***](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-java-modules-into-native-executable/)
+
+通过 `native-image --help` 可以看出该工具支持 3 种构建方式: class/jar/module:
 
 ```
-# from class
-native-image [options] class [imagename] [options]
-
-# from jar
-native-image [options] -jar jarfile [imagename]
+Usage: native-image [options] class [imagename] [options]
+           (to build an image for a class)
+   or  native-image [options] -jar jarfile [imagename] [options]
+           (to build an image for a jar file)
+   or  native-image [options] -m <module>[/<mainclass>] [options]
+       native-image [options] --module <module>[/<mainclass>] [options]
+           (to build an image for a module)
 ```
 
 > Windows 中的命令可能是 `native-image.exe` 或者 `native-image.cmd`, 取决于你的安装方式
 
+其他集成工具比如 Maven 插件原理上也是在项目构建时拼接参数传递给 native-image 工具.
 
+### 参数解释
+
+* **-H:+ReportExceptionStackTraces**: 构建原生应用时输出详细错误信息。
+
+## Using native-image in Docker
+
+如果不想在本地安装依赖, 尤其是 Windows 平台还是挺麻烦的, 这时候可以使用 Docker 来跑 native-image 命令. 原理也很简单, 制作一个包含 GraalVM JDK 21 以及 Native Image 构建依赖库的镜像即可. 下面是 Dockerfile 参考:
+
+```
+FROM yangbingdong/ubuntu24-sdkman:latest
+
+SHELL ["bash", "--login", "-c"]
+ADD GRAALVM_VERSION .
+RUN apt-get update -y && apt-get install build-essential libz-dev zlib1g-dev -y
+RUN sdk install java $(cat GRAALVM_VERSION) && sdk use java $(cat GRAALVM_VERSION)
+ENV JAVA_HOME=/root/.sdkman/candidates/java/current
+ENV PATH=$JAVA_HOME/bin:$PATH
+RUN which native-image
+
+ENTRYPOINT ["/bin/bash","--login", "-c"]
+```
+
+基于该镜像制作一个用于跑项目编译后 jar 包的 Native Image 镜像:
+
+```
+FROM yangbingdong/ubuntu24-graalvm21:latest
+
+WORKDIR /tmp/build
+ADD . /tmp/build
+RUN native-image -o XXX -jar XXX.jar
+
+CMD["/tmp/build/XXX"]
+```
+
+或者 mount target 目录, 直接进到容器中跑命令也可以~
 
 ## 通过 Maven 插件构建
 
@@ -352,6 +399,7 @@ Requirements:
 
 * Windows 下建议使用 Docker 构建 Native Image, 避免出现奇奇怪怪的问题, Quarkus 以及 Spring Boot 都有支持.
 * Windows 下是用 Docker Desktop 管理 Docker 的, 尽量多分配点资源, 否则容易出现编译慢甚至卡死的现象, 辛苦等半天结果编译失败了 T.T
+* GraalVM应该是不支持交叉编译的, 不过可以利用Windows提供的Linux子系统来编译源码。
 
 
 
