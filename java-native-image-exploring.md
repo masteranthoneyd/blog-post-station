@@ -81,7 +81,11 @@ Usage: native-image [options] class [imagename] [options]
 
 * `--libc`: 选择支持的库用于构建可执行文件, 支持的选项有 [`glibc`, `musl`, `bionic`]
 
-* `-O`: 控制代码优化
+* `-O`: 优化二进制镜像的大小, 性能, 构建时间等, 参考: ***[Optimizations and Performance](https://www.graalvm.org/dev/reference-manual/native-image/optimizations-and-performance/)***
+
+* `--no-fallback`: build stand-alone image or report failure
+
+* `--verbose`: 显示纤细的信息
 
 * `-H:+ReportExceptionStackTraces`: 构建原生应用时输出详细错误信息。
 
