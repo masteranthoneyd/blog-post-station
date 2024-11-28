@@ -1,6 +1,6 @@
 # 个人设置
 
-* 关闭 Usages
+* Editor -> Inlay Hints -> Code vision -> Inheritors, Usages, Code author
 
 # 远程开发篇
 

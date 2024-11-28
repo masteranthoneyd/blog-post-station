@@ -85,7 +85,7 @@ Usage: native-image [options] class [imagename] [options]
 
 * `-H:+ReportExceptionStackTraces`: 构建原生应用时输出详细错误信息。
 
-## Using native-image in Docker
+### Using native-image in Docker
 
 如果不想在本地安装依赖, 尤其是 Windows 平台还是挺麻烦的, 这时候可以使用 Docker 来跑 native-image 命令. 原理也很简单, 制作一个包含 GraalVM JDK 21 以及 Native Image 构建依赖库的镜像即可. 下面是 Dockerfile 参考:
 
@@ -126,6 +126,43 @@ ENTRYPOINT ["/hello"]
 
 
 ![](https://image.cdn.yangbingdong.com/image/java-native-image-exploring/8b5ce0bf2292e3782b8f329e64150f32-c1919f.png)
+
+### UPX Compress
+
+构建出来的二进制镜像可以被 ***[UPX](https://github.com/upx/upx)*** 进一步压缩, 下面是一个来自官方的 ***[Demo](https://github.com/graalvm/graalvm-demos/blob/master/tiny-java-containers/helloworld/Dockerfile)***:
+
+```
+# Build in a container with Oracle GraalVM Native Image and MUSL
+FROM container-registry.oracle.com/graalvm/native-image:23-muslib AS nativebuild
+WORKDIR /build
+# Install UPX 
+ARG UPX_VERSION=4.2.2
+ARG UPX_ARCHIVE=upx-${UPX_VERSION}-amd64_linux.tar.xz
+RUN microdnf -y install wget xz && \
+    wget -q https://github.com/upx/upx/releases/download/v${UPX_VERSION}/${UPX_ARCHIVE} && \
+    tar -xJf ${UPX_ARCHIVE} && \
+    rm -rf ${UPX_ARCHIVE} && \
+    mv upx-${UPX_VERSION}-amd64_linux/upx . && \
+    rm -rf upx-${UPX_VERSION}-amd64_linux
+
+# Compile the Hello class to Java bytecode
+COPY Hello.java Hello.java
+RUN javac Hello.java
+# Build a native executable with native-image
+RUN native-image -Os --static --libc=musl Hello -o hello
+RUN ls -lh hello
+
+# Compress the executable with UPX
+RUN ./upx --lzma --best -o hello.upx hello
+RUN ls -lh hello.upx
+
+# Copy the compressed executable into a scratch container
+FROM scratch
+COPY --from=nativebuild /build/hello.upx /hello.upx
+ENTRYPOINT ["/hello.upx"]
+```
+
+
 
 ## 通过 Maven 插件构建
 
@@ -420,8 +457,8 @@ Requirements:
 # Remark
 
 * Windows 下建议使用 Docker 构建 Native Image, 避免出现奇奇怪怪的问题, Quarkus 以及 Spring Boot 都有支持.
-* Windows 下是用 Docker Desktop 管理 Docker 的, 尽量多分配点资源, 否则容易出现编译慢甚至卡死的现象, 辛苦等半天结果编译失败了 T.T
-* GraalVM应该是不支持交叉编译的, 不过可以利用Windows提供的Linux子系统来编译源码。
+* Windows 下是用 Docker Desktop 管理 Docker 的, 尽量多分配点资源, 否则容易出现编译慢甚至卡死的现象, 辛苦等半天结果编译失败了
+* GraalVM不支持交叉编译, 不过可以利用Windows提供的Linux子系统来编译源码。
 
 
 
@@ -437,9 +474,9 @@ GraalVM 生成本地可执行文件的过程。具体步骤如下：
 
 
 
-```
-java --enable-preview -agentlib:native-image-agent=config-output-dir=META-INF/native-image -jar build-basie-native-image-1.0-SNAPSHOT-shaded.jar StringCapitalizer bingdong
-```
+# Refs
+
+* ***[Lab: GraalVM Native Image, Spring and Containerisation](https://luna.oracle.com/lab/fdfd090d-e52c-4481-a8de-dccecdca7d68)***
 
 
 
