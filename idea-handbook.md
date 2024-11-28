@@ -1,3 +1,7 @@
+# 个人设置
+
+* 关闭 Usages
+
 # 远程开发篇
 
 ![](https://image.cdn.yangbingdong.com/image/how-to-use-idea/9dac82d2775e449bcc3c2850a42ab5c4-4ae1d0.png)

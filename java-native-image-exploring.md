@@ -77,6 +77,12 @@ Usage: native-image [options] class [imagename] [options]
 
 * `-o`: 指定二进制镜像名
 
+* `--static`: 构建静态链接的可执行文件, 适合用于什么依赖都没有的 `scratch` 镜像, 但还需要 `--lic` 参数支持
+
+* `--libc`: 选择支持的库用于构建可执行文件, 支持的选项有 [`glibc`, `musl`, `bionic`]
+
+* `-O`: 控制代码优化
+
 * `-H:+ReportExceptionStackTraces`: 构建原生应用时输出详细错误信息。
 
 ## Using native-image in Docker
