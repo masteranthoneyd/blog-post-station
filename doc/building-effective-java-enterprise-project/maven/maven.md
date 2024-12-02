@@ -701,3 +701,28 @@ Spring Boot 由于支持了在配置文件中使用一样的占位符 `${}`, 所
     </executions>
 </plugin>
 ```
+
+# 其他
+
+## Maven Wrapper
+
+***[Maven Wrapper](https://liaoxuefeng.com/books/java/maven/wrapper/)*** 的作用是为了统一项目的 Maven 版本, 我们经常会在一些项目中看到一个 `mvnw` 的文件, 这个就是 Maven Wrapper, 使用 `mvnw` 等价于 `mvn` 命令, 比如运行 ` ./mvnw --version `, 只不过它会使用 `maven-wrapper.properties` 中定义好的 Maven 版本, 避免有些项目因为 Maven 版本不统一而导致运行错误.
+
+>  注：windows 环境请使用 `mvnw.cmd` 
+
+初始化一个 Maven Wrapper:
+
+```
+mvn -N wrapper:wrapper -Dmaven=3.9.9 -Dtype=bin
+```
+
+* `-N` 表示非递归, 只会在当前项目生成.
+* `-Dmaven` 可以指定版本, 不传默认获取最新版
+* `-Dtype=bin` 会马上生成  `.mvn/wrapper/maven-wrapper.jar` 
+
+在生成的 `.mvn/wrapper/maven-wrapper.properties` 文件中会有 Maven 下载的 Url, 默认是官方地址, 可以换成阿里源:
+
+```
+distributionUrl=https://mirrors.aliyun.com/apache/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.zip
+```
+
