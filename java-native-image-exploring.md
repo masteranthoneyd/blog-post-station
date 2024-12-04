@@ -166,7 +166,7 @@ COPY --from=nativebuild /build/hello.upx /hello.upx
 ENTRYPOINT ["/hello.upx"]
 ```
 
-
+>  upx 虽然可以压缩执行文件大小, 但在运行时会损耗额外的性能解压.
 
 ## 通过 Maven 插件构建
 
@@ -192,6 +192,7 @@ ENTRYPOINT ["/hello.upx"]
 <plugin>
     <groupId>org.graalvm.buildtools</groupId>
     <artifactId>native-maven-plugin</artifactId>
+    <!-- 启用拓展, 对 Junit 提供支持 -->
     <extensions>true</extensions>
     <executions>
         <execution>
@@ -235,6 +236,8 @@ native-maven-plugin 会自动采集 `META-INF/native-image/` 路径下的[***配
   * `<maven-jar-plugin> <archive> <manifest> <mainClass>`
 
 * `<imageName>`: 生成二进制问价的名字, 不配置默认取项目的 artifact ID.
+
+* `<dryRun>`: 只输出 native-image 命令, 不再往下执行.
 
 * `<buildArgs>`: 传递额外的构建参数, 参数列表参考: ***[Native Image Build Options](https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildOptions/)***
 
