@@ -599,6 +599,150 @@ Java 8 之后的10年里 Oracle 先后发布了13个版本, 其中3个 LTS 版�
 
 为了顺利过渡到更新的Java版本, 开发团队应当提前规划, 并确保充分理解上述各项挑战. 此外, 建议对现有代码库进行全面评估, 识别出可能受到版本变更影响的部分, 并制定详细的迁移策略. 对于新的项目开发, 可以充分利用最新Java版本带来的性能优化和其他改进, 但同时也应该意识到随之而来的额外工作量和技术要求. 
 
+## 版本升级兼容常用技巧
+
+### 添加被移除的包
+
+比较经典就是 `javax.xxx` 这个包, 有些三方库底层还是用了 javax 的类, 在 JDK 8 可以运行, 升级到 9 以上时就不能用了, 因为这个 javax 已经被移除, 这时候手动引入 javax 依赖, 比如:
+
+```
+<dependency>
+    <groupId>com.sun.mail</groupId>
+    <artifactId>javax.mail</artifactId>
+    <version>1.6.2</version>
+</dependency>
+```
+
+### 代码层面逻辑判断兼容
+
+如果使用了将来被移除或者重命名的类, 比如 `BASE64Encoder` 在 JDK 9 被移除, 为了兼容功能完整性, 需要判断当前运行的 JDK 版本从而在高版本运行环境中切换到其他实现.
+
+```
+String version = System.getProperty("java.version");
+if (version.startsWith("1.8")) {
+    // 使用 BASE64Encoder
+} else {
+    // 高版本实现
+}
+```
+
+### 打包时通过 Profile 区别不同版本
+
+如果一个公共类库比如 `common-util` 中引用了 `util-a:1.0`, `common-util` 需要在 JDK 8 及以上版本运行, 而 `util-a:1.0` 只能在 JDK 8 下运行, 只有 `util-a:2.0` 才支持更高的版本, 但是 `util-a:2.0` 需要 JDK 11+ 的编译环形, 所以 `common-util` 不能在 JDK 8 的环境中升级 `util-a` 到 2.0 版本.
+
+这个 Case 有两个解决方案:
+
+* **方案1**: 在高版本的项目中引入 `common-util`, 然后手动排除 `util-a:1.0` 并引入 2.0 版本.
+  * 优点: 简单
+  * 缺点: 一般一个 `common-util` 不可能只使用了一个三方库, 也不可能只被一两个项目引用, 所以采用此方案需要每个引用到 `common-util` 的项目都手动操作一边, 而且对于未来新增的类库管理不方便.
+* **方案2**: 通过 Maven Profile 打包两个版本, 一个给 JDK 8用, 另外一个给更高版本使用. 下面是一个例子, 通过 `mvn -Pjdk8 clean install` 命令打包出一个 `classifier` 为 `jdk8` 的版本.
+
+```
+<profiles>
+    <profile>
+        <id>default</id>
+        <activation>
+            <activeByDefault>true</activeByDefault>
+        </activation>
+        <properties>
+            <JAVA_VERSION>21</JAVA_VERSION>
+            <JAVA_HOME>~/.jdks/azul-21.0.1</JAVA_HOME>
+        </properties>
+        <dependencies>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>1.5.12</version>
+            </dependency>
+        </dependencies>
+    </profile>
+
+    <profile>
+        <id>jdk8</id>
+        <properties>
+            <JAVA_VERSION>1.8</JAVA_VERSION>
+            <JAVA_HOME>~/.jdks/azul-1.8.0_432</JAVA_HOME>
+        </properties>
+        <build>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                            <configuration>
+                                <classifier>jdk8</classifier>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </build>
+        <dependencies>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>1.3.14</version>
+            </dependency>
+        </dependencies>
+    </profile>
+</profiles>
+```
+
+### 其他
+
+#### Java 模块化问题
+
+遇到类似如下问题: 
+
+```
+Caused by: java.lang.reflect.InaccessibleObjectException: Unable to make protected final java.lang.Class java.lang.ClassLoader.defineClass(java.lang.String,byte[],int,int,java.security.ProtectionDomain) throws java.lang.ClassFormatError accessible: module java.base does not "opens java.lang" to unnamed module
+```
+
+需要加上启动参数打开包权限(其他包的报错类似):
+
+```
+--add-opens java.base/java.lang=ALL-UNNAMED
+```
+
+`maven-compiler-plugin` 以及 `maven-surefire-plugin` 插件也可能会遇到此问题, 解决方法也是加参数:
+
+```
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-compiler-plugin</artifactId>
+  <configuration>
+      <showWarnings>true</showWarnings>
+      <fork>true</fork>
+      <compilerArgs>
+        <!-- 根据报错添加对应的包 -->
+        <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+      </compilerArgs>
+  </configuration>
+</plugin>
+
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-surefire-plugin</artifactId>
+  <configuration>
+      <includes>
+        <include>**/*Test.java</include>
+      </includes>
+      <argLine>
+        <!-- 根据情况添加对应的包 -->
+        --add-opens java.base/java.lang=ALL-UNNAMED
+      </argLine>
+  </configuration>
+</plugin>
+```
+
+#### Spring Boot
+
+***[Spring Boot 3.0 Migration Guide](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.0-Migration-Guide)***
+
 # Ref
 
 * ***[Wiki - Java版本历史](https://zh.wikipedia.org/wiki/Java%E7%89%88%E6%9C%AC%E6%AD%B7%E5%8F%B2)***
@@ -608,4 +752,5 @@ Java 8 之后的10年里 Oracle 先后发布了13个版本, 其中3个 LTS 版�
 * [***JDK 11 Release Notes***](https://www.oracle.com/java/technologies/javase/11-relnote-issues.html)
 * [***JDK 17 Release Notes***](https://www.oracle.com/java/technologies/javase/17-relnote-issues.html)
 * [***JDK 21 Release Notes***](https://www.oracle.com/java/technologies/javase/21-relnote-issues.html)
+* ***[生产环境中 Java 21 启动参数](https://www.diguage.com/post/java-21-boot-parameters-in-the-production/)***
 * ***[java-new-feature-introduction](https://github.com/masteranthoneyd/java-new-feature-introduction)***
