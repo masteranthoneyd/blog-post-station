@@ -2,6 +2,10 @@
 
 * Editor -> Inlay Hints -> Code vision -> Inheritors, Usages, Code author
 
+# 插件篇
+
+* CharAutoReplace: 自动将中文符号替换成英文
+
 # 远程开发篇
 
 ![](https://image.cdn.yangbingdong.com/image/how-to-use-idea/9dac82d2775e449bcc3c2850a42ab5c4-4ae1d0.png)

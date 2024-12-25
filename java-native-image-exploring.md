@@ -87,7 +87,9 @@ Usage: native-image [options] class [imagename] [options]
 
 * `--verbose`: 显示纤细的信息
 
-* `-H:+ReportExceptionStackTraces`: 构建原生应用时输出详细错误信息。
+* `-H:+ReportExceptionStackTraces`: 构建原生应用时输出详细错误信息
+
+* `--shared`: 构建 shared library, 可用于 C 语言中, 详情见: ***[Build a Native Shared Library](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-native-shared-library/)***
 
 ### Using native-image in Docker
 
