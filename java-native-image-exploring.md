@@ -284,7 +284,7 @@ native-maven-plugin 会自动采集 `META-INF/native-image/` 路径下的[***配
 
 * `<useArgFile>`: 是否使用 argument file
 
-* `<quickBuild>`: 是否启用快速构建模式, 该模式适合开发阶段快速构建 nativa 镜像, 这类型镜像性能可能变弱因为舍弃了一部分代码的优化换取了构建时间, 以下是来自[***官网的原话***](https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildOutput/#qbm-use-quick-build-mode-for-faster-builds):
+* `<quickBuild>`: 是否启用快速构建模式, 该模式适合开发阶段快速构建 native 镜像, 这类型镜像性能可能变弱因为舍弃了一部分代码的优化换取了构建时间, 以下是来自[***官网的原话***](https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildOutput/#qbm-use-quick-build-mode-for-faster-builds):
 
   * > Consider using the quick build mode (`-Ob`) to speed up your builds during development. More precisely, this mode reduces the number of optimizations performed by the Graal compiler and thus reduces the overall time of the [compilation stage](https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildOutput/#stage-compiling). The quick build mode is not only useful for development, it can also cause the generated executable file to be smaller in size. Note, however, that the overall peak throughput of the executable may be lower due to the reduced number of optimizations.
 
@@ -365,7 +365,7 @@ native image 不支持像 Java 反射, 动态代理等运行时才确定的因�
 
 #### native image agent 支持
 
-native-iamge-agent 生成的配置文件默认放在了 `target/native/agent-output` 目录下, 建议将这些配置文件放到你的源码中.
+native-image-agent 生成的配置文件默认放在了 `target/native/agent-output` 目录下, 建议将这些配置文件放到你的源码中.
 
 启用 agent 支持:
 
@@ -435,7 +435,7 @@ native-iamge-agent 生成的配置文件默认放在了 `target/native/agent-out
     * `conditional`: 可以提供额外的 filter, 更多请看[***这里***](https://www.graalvm.org/latest/reference-manual/native-image/metadata/ExperimentalAgentOptions/)
   * `modes`: 对 direct 以及 conditional 模式起效, 参考上面的示例
   * `options`: agent 参数选项, 通用参数可以在[***这里***](https://www.graalvm.org/latest/reference-manual/native-image/metadata/AutomaticMetadataCollection/)找到.
-  * `metadataCopy`: 操纵 agent 生成的 metadate 文件
+  * `metadataCopy`: 操纵 agent 生成的 metadata 文件
     * `<outputDirectory>`: 复制 native 配置文件的目标文件夹
     * `<merge>`: 如果目标文件夹存在了配置文件, 是否进行合并, 否则覆盖
     * `<disabledStages>`: 在 main 阶段 或者 test 阶段禁用该复制操作
