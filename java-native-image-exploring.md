@@ -125,53 +125,6 @@ COPY --from=builder /tmp/build/hello /
 ENTRYPOINT ["/hello"]
 ```
 
-###  Difference between Mostly Static and Fully Static 
-
-通过上面给出的 Dockerfile 构建出来的二进制文件并不能直接跑在没有任何依赖的 `scratch` 镜像中, 至少需要有 `glibc` 库的支持, 这是因为这还不是一个 Fully Static Image, 默认情况下, 构建出来的是 dynamically linked binaries, 关于如何构建 Fully Static Image, 请参考: 
-
-* ***[Build a Static or Mostly-Static Native Executable](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-static-executables/)***
-* ***[https://github.com/graalvm/graalvm-demos/tree/master/tiny-java-containers](https://github.com/graalvm/graalvm-demos/tree/master/tiny-java-containers)***
-
-
-![](https://image.cdn.yangbingdong.com/image/java-native-image-exploring/8b5ce0bf2292e3782b8f329e64150f32-c1919f.png)
-
-### UPX Compress
-
-构建出来的二进制镜像可以被 ***[UPX](https://github.com/upx/upx)*** 进一步压缩, 下面是一个来自官方的 ***[Demo](https://github.com/graalvm/graalvm-demos/blob/master/tiny-java-containers/helloworld/Dockerfile)***:
-
-```
-# Build in a container with Oracle GraalVM Native Image and MUSL
-FROM container-registry.oracle.com/graalvm/native-image:23-muslib AS nativebuild
-WORKDIR /build
-# Install UPX 
-ARG UPX_VERSION=4.2.2
-ARG UPX_ARCHIVE=upx-${UPX_VERSION}-amd64_linux.tar.xz
-RUN microdnf -y install wget xz && \
-    wget -q https://github.com/upx/upx/releases/download/v${UPX_VERSION}/${UPX_ARCHIVE} && \
-    tar -xJf ${UPX_ARCHIVE} && \
-    rm -rf ${UPX_ARCHIVE} && \
-    mv upx-${UPX_VERSION}-amd64_linux/upx . && \
-    rm -rf upx-${UPX_VERSION}-amd64_linux
-
-# Compile the Hello class to Java bytecode
-COPY Hello.java Hello.java
-RUN javac Hello.java
-# Build a native executable with native-image
-RUN native-image -Os --static --libc=musl Hello -o hello
-RUN ls -lh hello
-
-# Compress the executable with UPX
-RUN ./upx --lzma --best -o hello.upx hello
-RUN ls -lh hello.upx
-
-# Copy the compressed executable into a scratch container
-FROM scratch
-COPY --from=nativebuild /build/hello.upx /hello.upx
-ENTRYPOINT ["/hello.upx"]
-```
-
->  upx 虽然可以压缩执行文件大小, 但在运行时会损耗额外的性能解压.
-
 ## 通过 Maven 插件构建
 
 > [***Maven plugin for GraalVM Native Image building***](https://graalvm.github.io/native-build-tools/latest/maven-plugin.html)
@@ -463,7 +416,93 @@ Requirements:
 
 * [***pack cli***](https://buildpacks.io/docs/install-pack/)
 
+# 特性说明
 
+##  Difference between Mostly Static and Fully Static 
+
+通过上面给出的 Dockerfile 构建出来的二进制文件并不能直接跑在没有任何依赖的 `scratch` 镜像中, 至少需要有 `glibc` 库的支持, 这是因为这还不是一个 Fully Static Image, 默认情况下, 构建出来的是 dynamically linked binaries, 关于如何构建 Fully Static Image, 请参考: 
+
+* ***[Build a Static or Mostly-Static Native Executable](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-static-executables/)***
+* ***[https://github.com/graalvm/graalvm-demos/tree/master/tiny-java-containers](https://github.com/graalvm/graalvm-demos/tree/master/tiny-java-containers)***
+
+
+![](https://image.cdn.yangbingdong.com/image/java-native-image-exploring/8b5ce0bf2292e3782b8f329e64150f32-c1919f.png)
+
+## Polyglot 多语言支持
+
+GraalVM 支持在 Java 代码中使用其他的编程语言比如 Python/ Js 等, 并一同打包成 Native Image, 详情见文档: ***[Embedding Languages](https://www.graalvm.org/latest/reference-manual/embed-languages/)***
+
+下面是一个[***官方例子***](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/), 调用 Js 的 `JSON.stringify` 将输入的 json 格式化:
+
+```
+import java.io.*;
+import java.util.stream.*;
+import org.graalvm.polyglot.*;
+
+public class PrettyPrintJSON {
+  public static void main(String[] args) throws java.io.IOException {
+    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+    String input = reader.lines()
+    .collect(Collectors.joining(System.lineSeparator()));
+    try (Context context = Context.create("js")) {
+      Value parse = context.eval("js", "JSON.parse");
+      Value stringify = context.eval("js", "JSON.stringify");
+      Value result = stringify.execute(parse.execute(input), null, 2);
+      System.out.println(result.asString());
+    }
+  }
+}
+```
+
+> 多语言支持下, 构建出来的 Native Image 会比正常的大, 因为包含了 Truffle framework.
+
+# 优化
+
+## UPX Compress 进行二进制文件压缩
+
+构建出来的二进制镜像可以被 ***[UPX](https://github.com/upx/upx)*** 进一步压缩, 下面是一个来自官方的 ***[Demo](https://github.com/graalvm/graalvm-demos/blob/master/tiny-java-containers/helloworld/Dockerfile)***:
+
+```
+# Build in a container with Oracle GraalVM Native Image and MUSL
+FROM container-registry.oracle.com/graalvm/native-image:23-muslib AS nativebuild
+WORKDIR /build
+# Install UPX 
+ARG UPX_VERSION=4.2.2
+ARG UPX_ARCHIVE=upx-${UPX_VERSION}-amd64_linux.tar.xz
+RUN microdnf -y install wget xz && \
+    wget -q https://github.com/upx/upx/releases/download/v${UPX_VERSION}/${UPX_ARCHIVE} && \
+    tar -xJf ${UPX_ARCHIVE} && \
+    rm -rf ${UPX_ARCHIVE} && \
+    mv upx-${UPX_VERSION}-amd64_linux/upx . && \
+    rm -rf upx-${UPX_VERSION}-amd64_linux
+
+# Compile the Hello class to Java bytecode
+COPY Hello.java Hello.java
+RUN javac Hello.java
+# Build a native executable with native-image
+RUN native-image -Os --static --libc=musl Hello -o hello
+RUN ls -lh hello
+
+# Compress the executable with UPX
+RUN ./upx --lzma --best -o hello.upx hello
+RUN ls -lh hello.upx
+
+# Copy the compressed executable into a scratch container
+FROM scratch
+COPY --from=nativebuild /build/hello.upx /hello.upx
+ENTRYPOINT ["/hello.upx"]
+```
+
+**注意:** upx 虽然可以压缩执行文件大小, 但在运行时会损耗额外的性能解压, 越大的文件解压所需要的时间越久.
+
+## PGO (Profile-Guided Optimization)
+
+***[Profile-Guided Optimization](https://www.graalvm.org/latest/reference-manual/native-image/optimizations-and-performance/PGO/)***
+
+需要生成两次 Native Image:
+
+* 通过 `--pgo-instrument` 参数生成插桩的可执行文件, 通过运行该可执行文件生成 `default.iprof` 文件
+* 通过 `--pgo` 应用 `default.iprof` 文件生成优化后的可执行文件.
 
 # Remark
 
