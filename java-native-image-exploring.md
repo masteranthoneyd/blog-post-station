@@ -81,6 +81,8 @@ Usage: native-image [options] class [imagename] [options]
 
 * `--libc`: 选择支持的库用于构建可执行文件, 支持的选项有 [`glibc`, `musl`, `bionic`]
 
+* `--static-nolibc`: 构建 Mostly-Static 的可执行文件 
+
 * `-O`: 优化二进制镜像的大小, 性能, 构建时间等, 参考: ***[Optimizations and Performance](https://www.graalvm.org/dev/reference-manual/native-image/optimizations-and-performance/)***
 
 * `--no-fallback`: build stand-alone image or report failure
@@ -125,7 +127,7 @@ ENTRYPOINT ["/hello"]
 
 ###  Difference between Mostly Static and Fully Static 
 
-通过上面给出的 Dockerfile 构建出来的二进制文件并不能直接跑在没有任何依赖的 `scratch` 镜像中, 至少需要有 `glibc` 库的支持, 这是因为这还不是一个 Fully Static Image, 关于如何构建 Fully Static Image, 请参考: 
+通过上面给出的 Dockerfile 构建出来的二进制文件并不能直接跑在没有任何依赖的 `scratch` 镜像中, 至少需要有 `glibc` 库的支持, 这是因为这还不是一个 Fully Static Image, 默认情况下, 构建出来的是 dynamically linked binaries, 关于如何构建 Fully Static Image, 请参考: 
 
 * ***[Build a Static or Mostly-Static Native Executable](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-static-executables/)***
 * ***[https://github.com/graalvm/graalvm-demos/tree/master/tiny-java-containers](https://github.com/graalvm/graalvm-demos/tree/master/tiny-java-containers)***
