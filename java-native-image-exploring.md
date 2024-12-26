@@ -75,6 +75,8 @@ Usage: native-image [options] class [imagename] [options]
 
 ### 参数解释
 
+* `-cp`/`-classpath`/`--class-path`: 指定 `classpath`
+
 * `-o`: 指定二进制镜像名
 
 * `--static`: 构建静态链接的可执行文件, 适合用于什么依赖都没有的 `scratch` 镜像, 但还需要 `--lic` 参数支持
@@ -90,6 +92,10 @@ Usage: native-image [options] class [imagename] [options]
 * `--verbose`: 显示纤细的信息
 
 * `-H:+ReportExceptionStackTraces`: 构建原生应用时输出详细错误信息
+
+* `--pgo-instrument`: 构建用于生成 PGO 文件的 native executable, 默认文件名为 `default.iprof`, 可通过 `-XX:ProfilesDumpFile=xxx.iprof` 执行生成 PGO 文件的名字.
+
+* `--pgo`: 构建通过 PGO 优化的 native executable, 后面加参数可指定 PGO 文件: `--pgo=xxx.iprof`
 
 * `--shared`: 构建 shared library, 可用于 C 语言中, 详情见: ***[Build a Native Shared Library](https://www.graalvm.org/latest/reference-manual/native-image/guides/build-native-shared-library/)***
 
