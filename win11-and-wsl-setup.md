@@ -201,13 +201,15 @@ Docker 这里我选择使用 Docker Desktop 并启用 WSL 集成, 当然另外�
 
 ## 终端美化
 
-> zsh + oh-my-zsh + starship
+>
+> 终端模拟器有很多, 比如比较受欢迎的 ***[Tabby](https://github.com/eugeny/tabby)***, 结合了现代 AI 技术的 ***[Warp](https://github.com/warpdotdev/Warp?tab=readme-ov-file)***, 但 win11 自带了 Windows Terminal, 对我个人而言已经够用了.
+> Shell: zsh (配置: ***[oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh)***, 美化: ***[Starship](https://github.com/starship/starship)***)
 
 ![](https://image.cdn.yangbingdong.com/image/win11-and-wsl-setup/d2c00c5639d246e81c370ed41a9ce3f6-b6fe94.png)
 
 ### 安装 zsh 与 oh-my-zsh
 
->  zsh 是一个强大的 shell, 但配置较为繁琐, 而 oh-my-zsh 是一个已经调优好的 zsh 配置, 开箱即用.
+>  zsh 是一个强大的 shell, 但配置较为繁琐, 而 ***[oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh)*** 是一个已经调优好的 zsh 配置, 开箱即用.
 
 ```
 apt install -y zsh
@@ -216,9 +218,7 @@ chsh -s /bin/zsh
 
 > 需要起一个新的 shell 才能生效
 
-**安装 *[oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh)* **
-
-一键安装(下载失败则需要代理😜):
+一键安装 oh-my-zsh(下载失败则需要代理😜):
 
 ```Shell
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -246,11 +246,7 @@ REMOTE=https://mirrors.tuna.tsinghua.edu.cn/git/ohmyzsh.git sh install.sh
 curl -sS https://starship.rs/install.sh | sh
 ```
 
-在 `~/.zshrc` 的最后, 添加以下内容:
-
-```
-eval "$(starship init zsh)"
-```
+在 `~/.zshrc` 的最后添加 `eval "$(starship init zsh)"` 或者在 plugin 中添加 `starship` 生效.
 
 前往***[预设](https://starship.rs/presets/)***查看心仪的主题并启用, 比如:
 
@@ -269,6 +265,8 @@ plugins=(
   git
   docker
   mvn
+  history-substring-search
+  extract
   ......
 )
 ```
@@ -293,6 +291,13 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:
 
 
 
+更多有趣插件:
+
+* ***[eza](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/eza)***: 现代化 ls 替代品 ***[eza](https://github.com/eza-community/eza)*** 项目插件, 主题库: ***[eza-theme](https://github.com/eza-community/eza-themes)***
+* ***[autojump](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/autojump)***: 快捷跳转工具 ***[autojump](https://github.com/wting/autojump)***
+* ***[fzf](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/fzf)***: 文件管理模糊搜索工具 ***[fzf](https://github.com/junegunn/fzf)***
+* ***[zsh-interactive-cd](https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/zsh-interactive-cd)***: 利用 fzf 实现交互式文件选择跳转
+
 ### 终端字体颜色
 
 颜色推荐: `#00FF00`
@@ -311,7 +316,7 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:
 
 可以通过修改 LS_COLORS 变量: ***[changing the directory colour in a ls command](https://github.com/ohmyzsh/ohmyzsh/discussions/10493)***
 
-可以通过替换 ls 命令, 比如使用 ***[lsd](https://github.com/lsd-rs/lsd)*** 或者***[exa](https://github.com/ogham/exa)***
+也可以通过替换 ls 命令, 比如使用 ***[lsd](https://github.com/lsd-rs/lsd)*** 或者***[eza](https://github.com/eza-community/eza)***
 
 ![](https://image.cdn.yangbingdong.com/image/win11-and-wsl-setup/1b035fb473f0e70cbb13bbd4faa7818b-937d45.png)
 
