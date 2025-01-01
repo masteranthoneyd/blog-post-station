@@ -260,6 +260,8 @@ starship preset gruvbox-rainbow -o ~/.config/starship.toml
 
 ### oh-my-zsh 插件
 
+> 更多官方插件: ***[https://github.com/ohmyzsh/ohmyzsh/wiki/Plugins](https://github.com/ohmyzsh/ohmyzsh/wiki/Plugins)***
+
 插件添加方式很简单, 将插件添加到 `.zshrc` 的 plugins 中, 例如下面是一些常规插件:
 
 ```
