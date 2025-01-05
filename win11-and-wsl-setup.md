@@ -1,4 +1,58 @@
-# 其他优化
+![](https://image.cdn.yangbingdong.com/image/win11-and-wsl-setup/077c0099962de19f110238a9948fb51b-3d5b73.png)
+
+# Win11 + WSL2 安装美化与开发配置
+
+最近换了台新主机, 原本打算只是将 CPU 换成 AMD 9950X, 奈何主板太旧不支持, 那就顺便整机换了=.=
+
+以前一段时间用的是双系统, 工作学习用Ubuntu Desktop, 娱乐休闲用 Win10, 但重启切换系统还是有成本的, 这次装了 Win11 并且 ***[WSL2](https://learn.microsoft.com/en-us/windows/wsl/)***(Windows Subsystem for Linux) 也比较成熟了(底层使用的是真正的 Linux 内核, 而不是像 WSL1 那样使用翻译层将 Linux 系统调用转化成 Windows 系统调用), 所以日常学习开发直接可以直接在 WSL2 上进行.
+
+每次重装完系统, 避免不了一大堆的个人偏好配置以及开发环境的搭建, 这里记录下我个人配置的一些东西.
+
+# 系统安装篇
+
+## 镜像下载
+
+* ***[官网链接](https://www.microsoft.com/zh-cn/software-download/windows11)***
+  * 注意选择磁盘映像 (ISO)进行下载
+* ***[itellyou](https://next.itellyou.cn/)***
+  * 需要注册
+
+
+
+## 镜像安装
+
+安装工具我是用 ***[微PE工具箱](https://www.wepe.com.cn/)*** 制作 U 盘启动盘, 通过 U 盘启动直接使用里面的安装工具即可.
+
+安装过程中需要注意的点是, 有一步是需要输入微软账号才能继续往下走, 这时候可以拔掉网线, 退回上一步再点下一步就能跳过了.
+
+
+
+## 驱动安装
+
+建议是装完系统后, 根据主板以及 CPU 厂商, 到对应的官网下载驱动程序安装或更新驱动, 避免出现莫名奇妙的问题. 具体教程我就不记录了, 挺简单的, 就是找到对应的驱动下载页面然后安装即可.
+
+以微星主板以及 AMD CPU 为例:
+
+* 微星 MAG X670E TOMAHAWK WIFI 对应的驱动工具: ***[https://www.msi.cn/Motherboard/MAG-X670E-TOMAHAWK-WIFI/support#utility](https://www.msi.cn/Motherboard/MAG-X670E-TOMAHAWK-WIFI/support#utility)***
+  * 下载 MSI Center 即可, 里面可以统一管理安装驱动以及一些其他操作主板的工具, 比如灯光风扇这些.
+* AMD 芯片组驱动: ***[https://www.amd.com/zh-cn/support/download/drivers.html](https://www.amd.com/zh-cn/support/download/drivers.html)***
+* 英伟达驱动, 可以选择 ***[NVIDIA APP](https://www.nvidia.cn/software/nvidia-app/)*** 或者 ***[查到对应驱动](https://www.nvidia.cn/drivers/lookup/)*** 进行下载安装
+
+
+
+
+
+
+
+## 其他
+
+### 更新 BIOS
+
+### 内存以及 CPU 超频
+
+#### 
+
+
 
 * 关闭还原点, 作用不大
 
