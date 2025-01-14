@@ -1,6 +1,6 @@
 ![](https://image.cdn.yangbingdong.com/image/win11-and-wsl-setup/077c0099962de19f110238a9948fb51b-3d5b73.png)
 
-# Win11 + WSL2 安装美化与开发配置
+# Win11 + WSL2 安装&美化&开发配置
 
 最近换了台新主机, 原本打算只是将 CPU 换成 AMD 9950X, 奈何主板太旧不支持, 那就顺便整机换了=.=
 
@@ -29,6 +29,19 @@
 
 
 
+## 激活
+
+激活方法有很多种, 比如在某宝购买激活码, 但会有突然失效的风险; 也可以使用 KMS 工具激活, 但时效性只有半年, 每隔半年需要重置一次.
+
+这里有两个 Github 上开源的工具:
+
+* ***[https://github.com/TGSAN/CMWTAT_Digital_Edition](https://github.com/TGSAN/CMWTAT_Digital_Edition)***
+* ***[https://github.com/massgravel/Microsoft-Activation-Scripts](https://github.com/massgravel/Microsoft-Activation-Scripts)***
+  * 这个是在线激活的, 可选多种方式激活, 也包括了 Office 套件
+  * ![](https://image.cdn.yangbingdong.com/image/win11-and-wsl-setup/fcc311fb77e44cab655c0fbfb1974953-2820c8.png)
+
+
+
 ## 驱动安装
 
 建议是装完系统后, 根据主板以及 CPU 厂商, 到对应的官网下载驱动程序安装或更新驱动, 避免出现莫名奇妙的问题, 比如 AMD Zen3及之后的CPU核心切换和资源调度依赖AMD芯片组驱动, 因此必须安装. 
@@ -42,17 +55,15 @@
 * AMD 芯片组驱动: ***[https://www.amd.com/zh-cn/support/download/drivers.html](https://www.amd.com/zh-cn/support/download/drivers.html)***
 * 英伟达驱动, 可以选择 ***[NVIDIA APP](https://www.nvidia.cn/software/nvidia-app/)*** 或者 ***[查到对应驱动](https://www.nvidia.cn/drivers/lookup/)*** 进行下载安装
 
-
-
 ## 其他
 
 ### BIOS 更新
 
-一般来说, 没什么大问题建议是不要动 BIOS, 最好就是装机时选择最新的稳定版安装后面就不要动了, 但有些特殊情况, 以 AMD 为例, AMD的新CPU依赖新的AGSA底层代码, 这些代码可以提升AMD CPU的性能和易用性, 比如内存性能和开机速度, 核心延迟等:
+一般来说, 没什么大问题建议是不要动 BIOS, 最好就是装机时选择最新的稳定版安装后面就不要动了, 但有些特殊情况, 以 AMD 为例, AMD的新 CPU 依赖新的 AGSA 底层代码, 这些代码可以提升 AMD CPU 的性能和易用性, 比如内存性能和开机速度, 核心延迟等:
 
 ![](https://image.cdn.yangbingdong.com/image/win11-and-wsl-setup/1b3b3195d716eb4f0db66712e8345932-618745.png)
 
-更新 BIOS 时, 注意需要先将 BIOS 还原到出厂设置, 否则容易变砖头.
+**注意**: 更新 BIOS 时, 需要先将 BIOS 还原到出厂设置, 否则容易变砖头.
 
 
 
@@ -70,9 +81,52 @@
 
 
 
+# 系统设置
 
+## 个性化与美化
 
-* 关闭还原点, 作用不大
+> 俗话说, 美化的尽头是默认. 这玩意比较主观, 所以喜欢就好, 不必纠结太多.
+
+一些零碎的设置(比如开始菜单广告/小组件)网上有很多教程了, 大部分设置集中在**个性化**与**隐私和安全性**.
+
+网上也有很多教程, 大部分都是需要额外安装工具的, 比如 Dock, 主题改 Mac 等.
+
+* 任务栏透明: TranslucentTB, 在 Mirosoft Store 搜索就有
+
+  * 改成透明后, 如果是深色的壁纸, 任务栏右下角的字体是黑色会导致看不清楚, 这时候可以修改成白色, 修建一个 txt 文本文档, 写入如下内容保存然后修改文件后缀为 `.reg` 并运行:
+
+    * ```
+      Windows Registry Editor Version 5.00
+      
+      [HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize]
+      "ColorPrevalence"=dword:00000002
+      ```
+
+    * 如果需要改回黑色将 2 改成 0 即可
+
+* 壁纸:
+
+  * Steam Wallpaper Engine
+  * ***[https://wallhaven.cc/](https://wallhaven.cc/)***
+
+* Dock
+
+  * Steam MyDockFinder
+  * ***[Winstep Nexus](http://winstep.net/nexus.asp)***
+
+## VBS 与 HVCI
+
+> 关于这两玩意是啥: ***[内存完整性和 VBS 启用](https://learn.microsoft.com/zh-cn/windows-hardware/design/device-experiences/oem-hvci-enablement)***
+
+这两个设置用在安全性方面的, 有测评显示关闭这两个能提升游戏性能, 但个人不推荐进行更改, 网上的教程基本是很暴力地直接关闭 Hyper-V, 这会导致 wsl 用不了, 配置高的电脑完全可以忽略这两个设置.
+
+## 其他
+
+### Windows11 轻松设置
+
+这是一个小工具, 里面可以有一些常用的设置, 还能禁用 Windows Defender.
+
+![](https://image.cdn.yangbingdong.com/image/win11-and-wsl-setup/64bcf5fa282ca65abf1b0d5f7ce10547-ba6425.png)
 
 # 开发篇
 
