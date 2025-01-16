@@ -86,6 +86,7 @@ Usage: native-image [options] class [imagename] [options]
 * `--static-nolibc`: 构建 Mostly-Static 的可执行文件 
 
 * `-O`: 优化二进制镜像的大小, 性能, 构建时间等, 参考: ***[Optimizations and Performance](https://www.graalvm.org/dev/reference-manual/native-image/optimizations-and-performance/)***
+  * `--emit build-report`: 生成优化报告
 
 * `--no-fallback`: build stand-alone image or report failure
 
@@ -499,7 +500,7 @@ COPY --from=nativebuild /build/hello.upx /hello.upx
 ENTRYPOINT ["/hello.upx"]
 ```
 
-**注意:** upx 虽然可以压缩执行文件大小, 但在运行时会损耗额外的性能解压, 越大的文件解压所需要的时间越久.
+**注意:** upx 虽然可以压缩执行文件大小, 但在运行时会**损耗额外的性能解压**, 越大的文件解压所需要的时间越久.
 
 ## PGO (Profile-Guided Optimization)
 
