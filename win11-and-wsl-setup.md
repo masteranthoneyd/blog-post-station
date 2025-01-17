@@ -1,6 +1,6 @@
 ![](https://image.cdn.yangbingdong.com/image/win11-and-wsl-setup/077c0099962de19f110238a9948fb51b-3d5b73.png)
 
-# Win11 + WSL2 安装&美化&开发配置
+# Win11 + WSL2 安装美化与开发配置
 
 最近换了台新主机, 原本打算只是将 CPU 换成 AMD 9950X, 奈何主板太旧不支持, 那就顺便整机换了=.=
 
@@ -84,6 +84,10 @@
 # 系统设置
 
 ## 个性化与美化
+
+线上个 Gif 展示一下效果
+
+![](https://image.cdn.yangbingdong.com/image/win11-and-wsl-setup/ee902e8e4ddee885e3f45242fea02476-77ec78.gif)
 
 > 俗话说, 美化的尽头是默认. 这玩意比较主观, 所以喜欢就好, 不必纠结太多.
 
