@@ -85,7 +85,7 @@
 
 ## 个性化与美化
 
-线上个 Gif 展示一下效果
+展示一下最终效果:
 
 ![](https://image.cdn.yangbingdong.com/image/win11-and-wsl-setup/ee902e8e4ddee885e3f45242fea02476-77ec78.gif)
 
