@@ -294,7 +294,25 @@ sdk env clear
 sdk env install
 ```
 
+### NVM 管理多版本 NodeJs
 
+SDK Man 没有 Node 的支持, 但可以通过 ***[NVM](https://github.com/nvm-sh/nvm)*** 来管理多版本 Node.
+
+安装:
+
+```
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+```
+
+Windows 版本: ***[nvm-windows](https://github.com/coreybutler/nvm-windows)***
+
+基本用法:
+```
+nvm list  //展示本地安装的所有版本，*号表示当前正在用
+nvm install [版本号]  //安装指定版本node 例如： nvm install 12.18.0
+nvm use 12.18.0  //使用特定版本
+nvm uninstall 12.18.0  //卸载指定版本
+```
 
 ## WSL2 + Jetbrains IDEA 开发
 
