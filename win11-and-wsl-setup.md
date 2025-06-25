@@ -307,12 +307,29 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 Windows 版本: ***[nvm-windows](https://github.com/coreybutler/nvm-windows)***
 
 基本用法:
-```
+
+```bash
+nvm node_mirror https://npmmirror.com/mirrors/node/  // 设置node镜像
+nvm npm_mirror https://npmmirror.com/mirrors/npm/  // 设置npm镜像
 nvm list  //展示本地安装的所有版本，*号表示当前正在用
 nvm install [版本号]  //安装指定版本node 例如： nvm install 12.18.0
-nvm use 12.18.0  //使用特定版本
-nvm uninstall 12.18.0  //卸载指定版本
+nvm use 22.14.0  //使用特定版本
+nvm uninstall 22.14.0  //卸载指定版本
 ```
+
+修改 npm 设置:
+
+```bash
+# 修改镜像源
+npm config set registry http://registry.npmmirror.com
+
+# npm config set cache "%NVM_SYMLINK%\node_cache"
+npm config set cache "D:\nvm\nodejs\node_cache"
+
+# npm config set prefix "%NVM_SYMLINK%\node_global"
+npm config set prefix "D:\nvm\nodejs\node_global"
+```
+> 这样更换 node 版本后, 依赖可以复用
 
 ## WSL2 + Jetbrains IDEA 开发
 
