@@ -218,6 +218,14 @@ Components: main restricted universe multiverse
 Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 ```
 
+### 取消 Windows Path 
+
+默认情况下, WSL 会自动将 Windows 的 Path 添加在子系统的 Path 中, 比如 Windows 中安装了 Node JS, WSL 中也能访问到, 如果只想要一个干净的 Path, 可以在子系统的 `/etc/wsl.conf` 文件中追加:
+```
+[interop]
+appendWindowsPath=false
+```
+
 ### 通过 SDK Man 管理 JDK 以及其他工具
 
 > 详细使用方法查看官网: ***[Usage](https://sdkman.io/usage)***
@@ -296,15 +304,11 @@ sdk env install
 
 ### NVM 管理多版本 NodeJs
 
-SDK Man 没有 Node 的支持, 但可以通过 ***[NVM](https://github.com/nvm-sh/nvm)*** 来管理多版本 Node.
+SDK Man 没有 Node 的支持, 但可以通过 NVM 来管理多版本 Node.
 
-安装:
+#### Windows 版本
 
-```
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-```
-
-Windows 版本: ***[nvm-windows](https://github.com/coreybutler/nvm-windows)***
+Github: ***[nvm-windows](https://github.com/coreybutler/nvm-windows)***
 
 基本用法:
 
@@ -330,6 +334,54 @@ npm config set cache "D:\nvm\nodejs\node_cache"
 npm config set prefix "D:\nvm\nodejs\node_global"
 ```
 > 这样更换 node 版本后, 依赖可以复用
+
+注意需要配置环境变量将 `npm_global` 添加到 PATH 中.
+
+#### Linux 版本
+
+Github: ***[nvm-sh](https://github.com/nvm-sh/nvm)***
+
+安装:
+
+```
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+```
+
+在环境变量中添加(或者 `.zshrc`):
+```
+export NVM_NODEJS_ORG_MIRROR=https://mirrors.aliyun.com/nodejs-release/
+```
+
+基本用法:
+
+```
+nvm list-remote  // 查看可安装的版本
+nvm list  //展示本地安装的所有版本，*号表示当前正在用
+nvm install [版本号]  //安装指定版本node 例如： nvm install 12.18.0
+nvm install --lst  // 安装最新稳定版
+nvm use 22.14.0  //使用特定版本
+nvm uninstall 22.14.0  //卸载指定版本
+```
+
+修改 npm 设置:
+
+```bash
+# 修改镜像源
+npm config set registry http://registry.npmmirror.com
+
+mkdir -p /root/.npm/npm_global
+npm config set prefix /root/.npm/npm_global
+
+mkdir -p /root/.npm/npm_cache
+npm config set cache /root/.npm/npm_cache
+```
+
+添加环境变量到 `.zshrc` 或者 `.zshenv`:
+
+```
+echo 'export PATH=/root/.npm/npm_global/bin:$PATH' >> ~/.zshrc
+source ~/.zshrc
+```
 
 ## WSL2 + Jetbrains IDEA 开发
 
