@@ -172,14 +172,15 @@ GUI 管理工具: ***[wsl2-distro-manager](https://github.com/bostrot/wsl2-distr
 
 ### 其他设置与优化
 
-**设置默认登陆用户**
+#### **设置默认登陆用户**
+
 `ubuntu2404 config --default-user Username`
 
 > `ubuntu2404` 对应 `ubuntu2404.exe`, 在安装完子系统后会有对应的命令.
 
 
 
-**WSL 高级配置**
+#### **WSL 高级配置**
 
 可以通过 ***[`.wslconfig`](https://learn.microsoft.com/zh-cn/windows/wsl/wsl-config#wslconfig)*** (放在用户根目录下)进行一些全局配置, 但是在开始菜单中搜索 WSL, 可以直接打开 WSL Setting 界面进行设置.
 
